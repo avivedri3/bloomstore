@@ -17,7 +17,7 @@ import { AuditService } from '../audit/audit.service';
 import { CartsService } from '../carts/carts.service';
 import { Cart } from '../models/cart.schema';
 import { IdempotencyKey } from '../models/idempotency-key.schema';
-import { Order } from '../models/order.schema';
+import { Order, OrderDocument } from '../models/order.schema';
 import { Payment } from '../models/payment.schema';
 import { Product } from '../models/product.schema';
 import { SequencesService } from '../sequences/sequences.service';
@@ -54,7 +54,7 @@ export class OrdersService {
 
     const session = await this.connection.startSession();
     try {
-      let created!: Order & { id: string };
+      let created: OrderDocument | undefined;
       await session.withTransaction(async () => {
         const snapshots = [];
         let total = 0;
@@ -111,15 +111,18 @@ export class OrdersService {
           { $set: { items: [] } },
           { session },
         );
-        created = order as Order & { id: string };
+        created = order;
       });
+      if (!created) {
+        throw new BadRequestException({ code: 'CHECKOUT_FAILED', message: 'Could not create order' });
+      }
       await this.cartsService.clear(userId);
       await this.keys.create({
         key: idempotencyKey,
         userId: new Types.ObjectId(userId),
         orderId: created._id,
       });
-      await this.audit.record('order.create', 'orders', userId, created.id, {
+      await this.audit.record('order.create', 'orders', userId, String(created._id), {
         orderNumber: created.orderNumber,
       });
       return this.toDto(created);
@@ -179,7 +182,7 @@ export class OrdersService {
     return this.updateStatus(id, { status: 'cancelled' }, userId);
   }
 
-  private async cancelAndRestock(order: Order & { id: string }): Promise<void> {
+  private async cancelAndRestock(order: OrderDocument): Promise<void> {
     if (['shipped', 'delivered', 'cancelled'].includes(order.status)) {
       throw new BadRequestException({
         code: 'ILLEGAL_TRANSITION',
@@ -209,9 +212,9 @@ export class OrdersService {
     }
   }
 
-  toDto(order: Order & { id: string; createdAt?: Date; updatedAt?: Date }): OrderDto {
+  toDto(order: OrderDocument): OrderDto {
     return {
-      id: order.id,
+      id: String(order._id),
       orderNumber: order.orderNumber,
       userId: order.userId.toString(),
       status: order.status,

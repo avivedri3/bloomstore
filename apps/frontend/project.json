@@ -29,11 +29,10 @@
       "options": { "buildTarget": "@bloomstore/frontend:build" }
     },
     "test": {
-      "executor": "@nx/vitest:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/coverage/apps/frontend"],
       "options": {
-        "passWithNoTests": true,
-        "reportsDirectory": "{projectRoot}/../../coverage/apps/frontend"
+        "command": "npx vitest run --config apps/frontend/vite.config.ts --passWithNoTests"
       }
     },
     "lint": { "executor": "@nx/eslint:lint" },

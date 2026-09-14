@@ -1,15 +1,17 @@
+const { join } = require('path');
+
 module.exports = {
-  preset: '../../jest.preset.js',
-  testEnvironment: 'node',
   displayName: '@bloomstore/backend',
-  rootDir: '.',
-  testMatch: ['**/?(*.)+(spec|test).ts'],
+  testEnvironment: 'node',
+  rootDir: join(__dirname, '../..'),
+  testMatch: ['<rootDir>/apps/backend/src/**/*.spec.ts'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
+    '^.+\\.ts$': [require.resolve('ts-jest'), { tsconfig: '<rootDir>/apps/backend/tsconfig.spec.json' }],
   },
-  coverageDirectory: '../../coverage/apps/backend',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  coverageDirectory: '<rootDir>/coverage/apps/backend',
+  setupFilesAfterEnv: ['<rootDir>/apps/backend/jest.setup.ts'],
   moduleNameMapper: {
-    '^@bloomstore/shared-types$': '<rootDir>/../../libs/shared-types/src/index.ts',
+    '^@bloomstore/shared-types$': '<rootDir>/libs/shared-types/src/index.ts',
   },
+  moduleFileExtensions: ['ts', 'js', 'json'],
 };

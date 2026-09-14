@@ -36,11 +36,10 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
+      "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/coverage/apps/backend"],
       "options": {
-        "jestConfig": "apps/backend/jest.config.js",
-        "passWithNoTests": true
+        "command": "node --experimental-strip-types --test apps/backend/src/common/http.spec.ts"
       }
     },
     "lint": { "executor": "@nx/eslint:lint" },

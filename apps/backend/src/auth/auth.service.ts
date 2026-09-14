@@ -11,7 +11,7 @@ import { ACCOUNT_LOCKED_CODE, AuthPayload, MAX_FAILED_LOGINS } from '@bloomstore
 import * as bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
 import { AuditService } from '../audit/audit.service';
-import { User } from '../models/user.schema';
+import { User, UserDocument } from '../models/user.schema';
 
 const LOCK_MS = 15 * 60 * 1000;
 
@@ -36,7 +36,7 @@ export class AuthService {
       role: 'customer',
       tokenVersion: 0,
     });
-    await this.audit.record('user.register', 'users', user.id, user.id);
+    await this.audit.record('user.register', 'users', String(user._id), String(user._id));
     return this.issue(user);
   }
 
@@ -57,7 +57,7 @@ export class AuthService {
       if (user.failedLoginAttempts >= MAX_FAILED_LOGINS) {
         user.lockUntil = new Date(Date.now() + LOCK_MS);
         await user.save();
-        await this.audit.record('user.lockout', 'users', user.id, user.id);
+        await this.audit.record('user.lockout', 'users', String(user._id), String(user._id));
         throw new HttpException(
           { code: ACCOUNT_LOCKED_CODE, message: 'Account locked after too many failed attempts' },
           HttpStatus.LOCKED,
@@ -69,7 +69,7 @@ export class AuthService {
     user.failedLoginAttempts = 0;
     user.lockUntil = null;
     await user.save();
-    await this.audit.record('user.login', 'users', user.id, user.id);
+    await this.audit.record('user.login', 'users', String(user._id), String(user._id));
     return this.issue(user);
   }
 
@@ -84,22 +84,23 @@ export class AuthService {
       throw new UnauthorizedException({ code: 'UNAUTHORIZED', message: 'User not found' });
     }
     return {
-      id: user.id,
+      id: String(user._id),
       email: user.email,
       fullName: user.fullName,
       role: user.role,
     };
   }
 
-  private issue(user: User & { id: string }): AuthPayload {
+  private issue(user: UserDocument): AuthPayload {
+    const id = String(user._id);
     const publicUser = {
-      id: user.id,
+      id,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
     };
     const accessToken = this.jwt.sign({
-      sub: user.id,
+      sub: id,
       email: user.email,
       role: user.role,
       tokenVersion: user.tokenVersion,

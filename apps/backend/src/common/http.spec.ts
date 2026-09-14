@@ -1,25 +1,27 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { canTransition, MAX_FAILED_LOGINS } from '@bloomstore/shared-types';
-import { fail, ok } from './common/http';
+import { fail, ok } from './http.ts';
 
 describe('http envelope', () => {
   it('wraps success payloads', () => {
-    expect(ok({ id: 1 })).toEqual({ success: true, data: { id: 1 } });
+    assert.deepEqual(ok({ id: 1 }), { success: true, data: { id: 1 } });
   });
 
   it('wraps errors', () => {
-    expect(fail('ACCOUNT_LOCKED', 'locked').error.code).toBe('ACCOUNT_LOCKED');
+    assert.equal(fail('ACCOUNT_LOCKED', 'locked').error.code, 'ACCOUNT_LOCKED');
   });
 });
 
 describe('order transitions used by OrdersService', () => {
   it('allows cancel before shipped', () => {
-    expect(canTransition('processing', 'cancelled')).toBe(true);
-    expect(canTransition('shipped', 'cancelled')).toBe(false);
+    assert.equal(canTransition('processing', 'cancelled'), true);
+    assert.equal(canTransition('shipped', 'cancelled'), false);
   });
 });
 
 describe('lockout policy', () => {
   it('locks after five failures', () => {
-    expect(MAX_FAILED_LOGINS).toBe(5);
+    assert.equal(MAX_FAILED_LOGINS, 5);
   });
 });

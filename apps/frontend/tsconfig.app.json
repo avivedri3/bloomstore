@@ -10,5 +10,6 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.tsx", "src/**/*.spec.ts"]
 }

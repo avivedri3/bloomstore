@@ -24,11 +24,10 @@
       }
     },
     "test": {
-      "executor": "@nx/jest:jest",
+      "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/coverage/libs/shared-types"],
       "options": {
-        "jestConfig": "libs/shared-types/jest.config.ts",
-        "passWithNoTests": true
+        "command": "node --experimental-strip-types --test libs/shared-types/src/index.spec.ts"
       }
     }
   }

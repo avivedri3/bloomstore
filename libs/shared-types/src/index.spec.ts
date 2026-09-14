@@ -1,15 +1,17 @@
-import { canTransition } from './index';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { canTransition } from './index.ts';
 
 describe('order state machine', () => {
   it('allows pending_payment to confirmed', () => {
-    expect(canTransition('pending_payment', 'confirmed')).toBe(true);
+    assert.equal(canTransition('pending_payment', 'confirmed'), true);
   });
 
   it('blocks shipped to cancelled', () => {
-    expect(canTransition('shipped', 'cancelled')).toBe(false);
+    assert.equal(canTransition('shipped', 'cancelled'), false);
   });
 
   it('blocks delivered to any other status', () => {
-    expect(canTransition('delivered', 'cancelled')).toBe(false);
+    assert.equal(canTransition('delivered', 'cancelled'), false);
   });
 });

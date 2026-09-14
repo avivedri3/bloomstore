@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { ProductDto, productInputSchema } from '@bloomstore/shared-types';
 import { Model } from 'mongoose';
-import { Product } from '../models/product.schema';
+import { Product, ProductDocument } from '../models/product.schema';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class ProductsService {
   async create(input: unknown, actorId: string): Promise<ProductDto> {
     const dto = productInputSchema.parse(input);
     const product = await this.products.create(dto);
-    await this.audit.record('product.create', 'products', actorId, product.id);
+    await this.audit.record('product.create', 'products', actorId, String(product._id));
     return this.toDto(product);
   }
 
@@ -56,9 +56,9 @@ export class ProductsService {
     await this.audit.record('product.softDelete', 'products', actorId, id);
   }
 
-  toDto(product: Product & { id: string }): ProductDto {
+  toDto(product: ProductDocument): ProductDto {
     return {
-      id: product.id,
+      id: String(product._id),
       name: product.name,
       description: product.description,
       category: product.category,

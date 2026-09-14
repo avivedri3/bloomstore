@@ -1,4 +1,4 @@
-import { ApiError, ApiSuccess } from '@bloomstore/shared-types';
+import type { ApiError, ApiSuccess } from '@bloomstore/shared-types';
 
 export function ok<T>(data: T): ApiSuccess<T> {
   return { success: true, data };
