@@ -1,0 +1,12 @@
+node_modules
+dist
+.nx
+coverage
+tmp
+*.log
+.env
+.env.local
+.DS_Store
+*.tsbuildinfo
+apps/frontend/.env
+apps/backend/.env

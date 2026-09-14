@@ -1,0 +1,47 @@
+{
+  "name": "@bloomstore/frontend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/frontend/src",
+  "tags": ["scope:frontend", "type:app"],
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": { "outputPath": "dist/apps/frontend" },
+      "configurations": {
+        "local": { "mode": "" },
+        "development": { "mode": "development" },
+        "production": { "mode": "production" }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "local",
+      "options": { "buildTarget": "@bloomstore/frontend:build" },
+      "configurations": {
+        "local": { "buildTarget": "@bloomstore/frontend:build:local", "hmr": true }
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "options": { "buildTarget": "@bloomstore/frontend:build" }
+    },
+    "test": {
+      "executor": "@nx/vitest:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "{projectRoot}/../../coverage/apps/frontend"
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit -p apps/frontend/tsconfig.app.json"
+      }
+    }
+  }
+}
