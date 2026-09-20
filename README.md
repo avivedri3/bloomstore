@@ -61,9 +61,9 @@ Academic documentation: [docs/project-book.md](./docs/project-book.md). Agent ru
 
 ## GitHub Pages
 
-The React storefront and a static copy of the project book are published by [`.github/workflows/deploy-gh-pages.yml`](./.github/workflows/deploy-gh-pages.yml) on every push to `main` (or via **Actions → Deploy to GitHub Pages → Run workflow**).
+CI/CD follows the iAgent-style pipeline (see [`.github/README.md`](./.github/README.md)): quality checks, Render for the API, GitHub Actions Pages for the SPA.
 
 Live site: https://avivedri3.github.io/bloomstore/  
 Project book: https://avivedri3.github.io/bloomstore/docs/
 
-GitHub → **Settings → Pages → Build and deployment → Source: GitHub Actions**. Optional repository variable `VITE_API_BASE_URL` should point at the Render API (for example `https://<service>.onrender.com/api`).
+GitHub → **Settings → Pages → Source: GitHub Actions**. Set `VITE_API_BASE_URL` (repo variable) and `RENDER_DEPLOY_HOOK` (repo secret) as in [`.github/SECRETS.md`](./.github/SECRETS.md).

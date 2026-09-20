@@ -1,7 +1,9 @@
 name: 🚀 Deploy to GitHub Pages
 
 on:
-  push:
+  workflow_run:
+    workflows: ["🚀 Deploy Backend to Render"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -11,11 +13,12 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: deploy-pipeline
   cancel-in-progress: false
 
 env:
   NODE_VERSION: "24"
+  BASE_URL: "/bloomstore/"
   NX_CLOUD_DISTRIBUTED_EXECUTION: "false"
   NX_CLOUD_NO_ACCESS: "true"
   NX_SKIP_CLOUD_CACHE: "true"
@@ -25,9 +28,20 @@ jobs:
     name: 🏗️ Build Frontend & Docs
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      affected: ${{ steps.affected.outputs.affected }}
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: 🧭 Set Nx affected SHAs
+        uses: nrwl/nx-set-shas@v4
 
       - name: 🏷️ Set build metadata
         id: build-meta
@@ -53,32 +67,55 @@ jobs:
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
 
+      - name: 🧭 Check if frontend is affected
+        id: affected
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "workflow_run" ]]; then
+            echo "affected=true" >> "$GITHUB_OUTPUT"
+            echo "Deploying frontend (manual dispatch or post-backend deploy)"
+            exit 0
+          fi
+
+          AFFECTED_PROJECTS="$(npm exec nx -- show projects --affected --base="$NX_BASE" --head="$NX_HEAD")"
+          echo "Affected projects:"
+          echo "$AFFECTED_PROJECTS"
+
+          if echo "$AFFECTED_PROJECTS" | grep -Fxq "@bloomstore/frontend"; then
+            echo "affected=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -Eq '^(docs/|README.md|DOCS_SYNC.md)'; then
+            echo "affected=true" >> "$GITHUB_OUTPUT"
+            echo "Docs changed; deploying Pages"
+            exit 0
+          fi
+
+          echo "affected=false" >> "$GITHUB_OUTPUT"
+
       - name: 🧭 Setup GitHub Pages
+        if: steps.affected.outputs.affected == 'true'
         id: pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
-      - name: 🏷️ Normalize Vite base path
-        id: base
-        run: |
-          BASE="${{ steps.pages.outputs.base_path }}"
-          BASE="${BASE:-/${GITHUB_REPOSITORY#*/}}"
-          [[ "$BASE" == */ ]] || BASE="${BASE}/"
-          echo "vite_base_url=$BASE" >> "$GITHUB_OUTPUT"
-          echo "Vite base URL: $BASE"
-
       - name: 🏗️ Build frontend for production
+        if: steps.affected.outputs.affected == 'true'
         run: npm exec nx -- build @bloomstore/frontend --configuration=production --no-cloud
         env:
           BUILD_DATE: ${{ steps.build-meta.outputs.build_date }}
           APP_VERSION: ${{ steps.build-meta.outputs.app_version }}
-          VITE_BASE_URL: ${{ steps.base.outputs.vite_base_url }}
+          VITE_BASE_URL: ${{ env.BASE_URL }}
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_ENVIRONMENT: production
           NODE_ENV: production
+          NX_CLOUD_DISTRIBUTED_EXECUTION: "false"
+          NX_SKIP_CLOUD_CACHE: "true"
+          NX_CLOUD_NO_ACCESS: "true"
 
       - name: 📚 Convert project book to HTML
+        if: steps.affected.outputs.affected == 'true'
         run: |
           mkdir -p dist/apps/frontend/docs
           python3 - <<'PY'
@@ -92,7 +129,7 @@ jobs:
             <meta charset="utf-8"/>
             <title>ספר פרויקט BloomStore</title>
             <style>
-              body {{ font-family: 'Segoe UI', Arial, sans-serif; max-width: 920px; margin: 2rem auto; line-height: 1.7; }}
+              body {{ font-family: 'Segoe UI', Arial, sans-serif; max-width: 920px; margin: 2rem auto; line-height: 1.7; background: #fff; color: #111; }}
               pre {{ white-space: pre-wrap; }}
             </style>
           </head>
@@ -106,28 +143,56 @@ jobs:
           PY
 
       - name: 📊 Verify build output
+        if: steps.affected.outputs.affected == 'true'
         run: |
-          test -f dist/apps/frontend/index.html
-          test -f dist/apps/frontend/docs/index.html
-          echo "📊 Frontend build size: $(du -sh dist/apps/frontend)"
+          echo "📊 Build verification:"
+          echo "📁 Build directory: dist/apps/frontend"
+          echo "📏 Total size: $(du -sh dist/apps/frontend)"
+
+          if [[ -f "dist/apps/frontend/index.html" ]]; then
+            echo "✅ index.html exists"
+          else
+            echo "❌ index.html missing"
+            exit 1
+          fi
+
+          if [[ -f "dist/apps/frontend/docs/index.html" ]]; then
+            echo "✅ docs/index.html exists"
+          else
+            echo "❌ docs/index.html missing"
+            exit 1
+          fi
+
+          echo "📄 Main files:"
           ls -la dist/apps/frontend
 
       - name: 🔧 Prepare deployment files
+        if: steps.affected.outputs.affected == 'true'
         run: |
           cd dist/apps/frontend
           touch .nojekyll
           cp index.html 404.html
-          printf 'User-agent: *\nAllow: /\n' > robots.txt
+          cat > robots.txt << EOF
+          User-agent: *
+          Allow: /
+          Sitemap: https://${{ github.repository_owner }}.github.io${{ env.BASE_URL }}
+          EOF
+          echo "✅ Deployment files prepared"
 
       - name: 📤 Upload GitHub Pages artifact
+        if: steps.affected.outputs.affected == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/apps/frontend
-          include-hidden-files: true
+
+      - name: ⏭️ Skip build summary
+        if: steps.affected.outputs.affected != 'true'
+        run: echo "Frontend is not affected; skipping Pages build."
 
   deploy:
     name: 🚀 Deploy to GitHub Pages
     needs: build
+    if: needs.build.outputs.affected == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -140,6 +205,25 @@ jobs:
 
       - name: 📋 Deployment summary
         run: |
-          echo "✅ Frontend deployed successfully"
-          echo "🌐 URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "📋 Deployment Summary:"
+          echo "✅ Frontend deployed successfully!"
+          echo "🌐 URL: https://${{ github.repository_owner }}.github.io/bloomstore/"
+          echo "📚 Docs: https://${{ github.repository_owner }}.github.io/bloomstore/docs/"
+          echo "🕐 Deployed at: $(date)"
           echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+
+      - name: 🌐 Verify deployment
+        run: |
+          echo "🌐 Verifying deployment accessibility..."
+          DEPLOYMENT_URL="https://${{ github.repository_owner }}.github.io/bloomstore/"
+          echo "⏳ Waiting 30 seconds for deployment to propagate..."
+          sleep 30
+          if curl -sL --fail "$DEPLOYMENT_URL" > /dev/null; then
+            echo "✅ Deployment is accessible!"
+            echo "🎉 Visit your app at: $DEPLOYMENT_URL"
+          else
+            echo "⚠️ Deployment verification inconclusive"
+            echo "🌐 Please check manually: $DEPLOYMENT_URL"
+            echo "ℹ️ It may take a few minutes for GitHub Pages to update"
+          fi

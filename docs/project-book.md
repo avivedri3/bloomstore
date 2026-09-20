@@ -223,7 +223,7 @@ npm run dev
 ### פריסה
 
 - Frontend + HTML של הספר: GitHub Pages (`deploy-gh-pages.yml`, מקור: GitHub Actions) — https://avivedri3.github.io/bloomstore/
-- Backend: Render לפי `RENDER_DEPLOYMENT.md` (Dockerfile בנתיב `apps/backend/Dockerfile`, context שורש הריפו)
+- Backend: Render (`deploy-backend.yml` דרך Deploy Hook, Dockerfile בנתיב `apps/backend/Dockerfile`, context שורש הריפו) לפי `RENDER_DEPLOYMENT.md`
 
 ---
 

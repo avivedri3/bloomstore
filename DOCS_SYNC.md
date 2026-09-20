@@ -33,7 +33,7 @@ Update the project book in the **same change set** as the code when you:
 - API: `GET /api/docs` (NestJS streams the file)
 - REST reference: `apps/backend/README.md`, served at `GET /api/docs/readme`
 - OpenAPI: Swagger UI at `/api/swagger`, spec at `/api/swagger-json`
-- Static: GitHub Pages copies converted HTML next to the SPA during `deploy-gh-pages.yml` (source: GitHub Actions)
+- Static: GitHub Pages copies converted HTML next to the SPA during `deploy-gh-pages.yml` (source: GitHub Actions). Backend deploys via `deploy-backend.yml`.
 
 ## Checklist before merge
 

@@ -27,15 +27,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: 🧭 Set Nx affected SHAs
         uses: nrwl/nx-set-shas@v4
+
       - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
+
       - name: 🔍 Cache Nx computation cache
         uses: actions/cache@v4
         with:
@@ -43,11 +47,13 @@ jobs:
           key: nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+
       - name: 🧹 Lint affected projects
         continue-on-error: true
         run: |
           npm exec nx -- affected -t lint --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache
           echo "✅ Affected lint completed"
+
       - name: 🔧 Typecheck affected projects
         run: npm exec nx -- affected -t typecheck --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache
 
@@ -60,15 +66,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: 🧭 Set Nx affected SHAs
         uses: nrwl/nx-set-shas@v4
+
       - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
+
       - name: 🔍 Cache Nx computation cache
         uses: actions/cache@v4
         with:
@@ -76,11 +86,13 @@ jobs:
           key: nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+
       - name: 🧪 Test affected projects
-        run: npm exec nx -- affected -t test --base="$NX_BASE" --head="$NX_HEAD" --passWithNoTests --skip-nx-cache
+        run: npm exec nx -- affected -t test --base="$NX_BASE" --head="$NX_HEAD" --skip-nx-cache
         env:
           CI: true
           NX_CLOUD_DISTRIBUTED_EXECUTION: "false"
+
       - name: 📊 Upload frontend coverage
         if: ${{ hashFiles('coverage/apps/frontend/**') != '' }}
         uses: codecov/codecov-action@v4
@@ -100,15 +112,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: 🧭 Set Nx affected SHAs
         uses: nrwl/nx-set-shas@v4
+
       - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
+
       - name: 🔍 Cache Nx computation cache
         uses: actions/cache@v4
         with:
@@ -116,20 +132,25 @@ jobs:
           key: nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}-
+
       - name: 🏗️ Build affected projects
         run: npm exec nx -- affected -t build --base="$NX_BASE" --head="$NX_HEAD" --configuration=production --skip-nx-cache
         env:
-          VITE_BASE_URL: "/${{ github.event.repository.name }}/"
-          VITE_API_BASE_URL: "/${{ github.event.repository.name }}/api"
+          VITE_BASE_URL: "/bloomstore/"
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_ENVIRONMENT: "production"
           NX_CLOUD_DISTRIBUTED_EXECUTION: "false"
           NX_SKIP_CLOUD_CACHE: "true"
           NX_CLOUD_NO_ACCESS: "true"
+
       - name: 📊 Analyze frontend build size
         if: ${{ hashFiles('dist/apps/frontend/index.html') != '' }}
         run: |
           echo "📊 Frontend build analysis:"
           du -sh dist/apps/frontend
+          echo "📄 Main files:"
+          find dist/apps/frontend -name "*.js" -o -name "*.css" | head -10
+
       - name: 📋 Upload frontend build artifact
         if: ${{ hashFiles('dist/apps/frontend/index.html') != '' }}
         uses: actions/upload-artifact@v4
@@ -145,13 +166,16 @@ jobs:
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
+
       - name: 🔧 Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
+
       - name: 📦 Install dependencies
         run: npm ci --prefer-offline --no-audit
+
       - name: 🔒 Run npm audit
         run: npm audit --audit-level=high --no-fund
 
@@ -163,9 +187,13 @@ jobs:
     steps:
       - name: ✅ All checks passed
         if: ${{ !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-        run: echo "✅ All CI checks passed successfully!"
+        run: |
+          echo "✅ All CI checks passed successfully!"
+          echo "🎉 Code is ready for deployment!"
+
       - name: ❌ Some checks failed
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: |
           echo "❌ Some CI checks failed!"
+          echo "🔍 Please review the failed jobs and fix issues."
           exit 1

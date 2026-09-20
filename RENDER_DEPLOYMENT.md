@@ -9,6 +9,8 @@ In Render → Web Service → **Settings**:
 
 Then **Manual Deploy → Clear build cache & deploy**.
 
+Automatic deploys: add a Render **Deploy Hook** as the GitHub Actions secret `RENDER_DEPLOY_HOOK`. `deploy-backend.yml` POSTs that hook when `@bloomstore/backend` changes on `main`.
+
 Demo logins (created by the seed service when collections are empty):
 
 - Admin: `admin@bloomstore.com` / `Admin123!`
