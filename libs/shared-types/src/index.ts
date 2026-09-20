@@ -58,23 +58,23 @@ export type ApiSuccess<T> = { success: true; data: T };
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;
 
 export const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  fullName: z.string().min(2),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  fullName: z.string().min(2, 'Enter your full name'),
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(1, 'Enter your password'),
 });
 
 export const productInputSchema = z.object({
-  name: z.string().min(2),
-  description: z.string().min(8),
+  name: z.string().min(2, 'Enter a product name'),
+  description: z.string().min(8, 'Description must be at least 8 characters'),
   category: z.enum(PRODUCT_CATEGORIES),
-  price: z.number().positive(),
-  stock: z.number().int().nonnegative(),
-  imageUrl: z.string().url(),
+  price: z.number().positive('Price must be greater than 0'),
+  stock: z.number().int().nonnegative('Stock cannot be negative'),
+  imageUrl: z.string().url('Enter a valid image URL'),
   isActive: z.boolean().default(true),
 });
 
@@ -84,11 +84,11 @@ export const cartItemInputSchema = z.object({
 });
 
 export const addressInputSchema = z.object({
-  fullName: z.string().min(2),
-  phone: z.string().min(7),
-  city: z.string().min(2),
-  street: z.string().min(2),
-  houseNumber: z.string().min(1),
+  fullName: z.string().min(2, 'Enter the recipient name'),
+  phone: z.string().min(7, 'Enter a valid phone number'),
+  city: z.string().min(2, 'Enter a city'),
+  street: z.string().min(2, 'Enter a street'),
+  houseNumber: z.string().min(1, 'Enter a house number'),
   apartment: z.string().optional(),
   notes: z.string().optional(),
   isDefault: z.boolean().optional(),

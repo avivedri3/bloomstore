@@ -46,7 +46,9 @@ export function CatalogPage() {
             <InputLabel id="catalog-category">Category</InputLabel>
             <Select
               labelId="catalog-category"
+              name="catalog-category"
               label="Category"
+              autoComplete="off"
               value={category}
               onChange={(e) => setCategory(String(e.target.value))}
             >
@@ -72,7 +74,12 @@ export function CatalogPage() {
         {products.map((product) => (
           <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardMedia component="img" height="200" image={product.imageUrl} alt={product.name} />
+              <CardMedia
+                component="img"
+                image={product.imageUrl}
+                alt={product.name}
+                sx={{ height: 240, objectFit: 'cover' }}
+              />
               <CardContent sx={{ flex: 1 }}>
                 <Chip size="small" label={product.category} sx={{ mb: 1.5 }} />
                 <Typography variant="h6" component="h2" gutterBottom>

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Chip,
@@ -26,6 +27,7 @@ import {
   ORDER_STATUSES,
   PRODUCT_CATEGORIES,
   canTransition,
+  productInputSchema,
   type AdminStatsDto,
   type OrderDto,
   type OrderStatus,
@@ -35,6 +37,17 @@ import { PageHeader } from '../components/layout/PageHeader';
 import { PageShell } from '../components/layout/PageShell';
 import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { api, unwrap } from '../services/api';
+import { fieldErrorsFromZod } from '../utils/form';
+
+const emptyProductForm = {
+  name: '',
+  description: '',
+  category: 'bouquets' as (typeof PRODUCT_CATEGORIES)[number],
+  price: '',
+  stock: '',
+  imageUrl: '',
+  isActive: true,
+};
 
 export function AdminPage() {
   const theme = useTheme();
@@ -43,15 +56,10 @@ export function AdminPage() {
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [status, setStatus] = useState<string>('');
   const [stats, setStats] = useState<AdminStatsDto | null>(null);
-  const [form, setForm] = useState({
-    name: '',
-    description: 'Beautiful seasonal arrangement.',
-    category: 'bouquets',
-    price: 120,
-    stock: 10,
-    imageUrl: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800',
-    isActive: true,
-  });
+  const [form, setForm] = useState(emptyProductForm);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const loadProducts = () => unwrap<ProductDto[]>(api.get('/products/admin')).then(setProducts);
   const loadOrders = () =>
@@ -67,6 +75,35 @@ export function AdminPage() {
     void loadOrders();
   }, [status]);
 
+  const addProduct = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    const parsed = productInputSchema.safeParse({
+      name: form.name,
+      description: form.description,
+      category: form.category,
+      price: Number(form.price),
+      stock: Number(form.stock),
+      imageUrl: form.imageUrl,
+      isActive: form.isActive,
+    });
+    if (!parsed.success) {
+      setFieldErrors(fieldErrorsFromZod(parsed.error));
+      return;
+    }
+    setFieldErrors({});
+    setSubmitting(true);
+    try {
+      await unwrap(api.post('/products', parsed.data));
+      setForm(emptyProductForm);
+      await loadProducts();
+    } catch (err) {
+      setFormError((err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <PageShell>
       <PageHeader title="Admin" subtitle="Manage catalog, orders, and view store analytics." />
@@ -79,33 +116,39 @@ export function AdminPage() {
       {tab === 0 && (
         <Box>
           <Paper variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-            <Stack
-              component="form"
-              spacing={2}
-              onSubmit={(e) => {
-                e.preventDefault();
-                void unwrap(api.post('/products', { ...form, price: Number(form.price), stock: Number(form.stock) })).then(
-                  loadProducts,
-                );
-              }}
-            >
+            <Stack component="form" spacing={2} autoComplete="off" onSubmit={(e) => void addProduct(e)}>
               <Typography variant="h6">Add product</Typography>
+              {formError && <Alert severity="error">{formError}</Alert>}
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
+                    id="product-name"
+                    name="product-name"
                     fullWidth
+                    required
                     label="Name"
+                    autoComplete="off"
                     value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                    error={Boolean(fieldErrors.name)}
+                    helperText={fieldErrors.name}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
+                    id="product-category"
+                    name="product-category"
                     select
                     fullWidth
+                    required
                     label="Category"
+                    autoComplete="off"
                     value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, category: e.target.value as (typeof PRODUCT_CATEGORIES)[number] }))
+                    }
+                    error={Boolean(fieldErrors.category)}
+                    helperText={fieldErrors.category}
                   >
                     {PRODUCT_CATEGORIES.map((c) => (
                       <MenuItem key={c} value={c}>
@@ -114,35 +157,72 @@ export function AdminPage() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={12}>
                   <TextField
+                    id="product-description"
+                    name="product-description"
                     fullWidth
-                    label="Price"
-                    type="number"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                    required
+                    multiline
+                    minRows={2}
+                    label="Description"
+                    autoComplete="off"
+                    value={form.description}
+                    onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                    error={Boolean(fieldErrors.description)}
+                    helperText={fieldErrors.description}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
+                    id="product-price"
+                    name="product-price"
                     fullWidth
+                    required
+                    label="Price"
+                    type="number"
+                    autoComplete="off"
+                    value={form.price}
+                    onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))}
+                    error={Boolean(fieldErrors.price)}
+                    helperText={fieldErrors.price}
+                    slotProps={{ htmlInput: { min: 0.01, step: 0.01 } }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    id="product-stock"
+                    name="product-stock"
+                    fullWidth
+                    required
                     label="Stock"
                     type="number"
+                    autoComplete="off"
                     value={form.stock}
-                    onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))}
+                    error={Boolean(fieldErrors.stock)}
+                    helperText={fieldErrors.stock}
+                    slotProps={{ htmlInput: { min: 0, step: 1 } }}
                   />
                 </Grid>
                 <Grid size={12}>
                   <TextField
+                    id="product-image-url"
+                    name="product-image-url"
                     fullWidth
+                    required
                     label="Image URL"
+                    type="url"
+                    autoComplete="off"
                     value={form.imageUrl}
-                    onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                    onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                    error={Boolean(fieldErrors.imageUrl)}
+                    helperText={fieldErrors.imageUrl}
                   />
                 </Grid>
               </Grid>
-              <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start' }}>
-                Add product
+              <Button type="submit" variant="contained" disabled={submitting} sx={{ alignSelf: 'flex-start' }}>
+                {submitting ? 'Adding…' : 'Add product'}
               </Button>
             </Stack>
           </Paper>

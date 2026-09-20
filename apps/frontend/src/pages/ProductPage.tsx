@@ -36,7 +36,12 @@ export function ProductPage() {
   return (
     <PageShell maxWidth="md">
       <Card>
-        <CardMedia component="img" height="360" image={product.imageUrl} alt={product.name} />
+        <CardMedia
+          component="img"
+          image={product.imageUrl}
+          alt={product.name}
+          sx={{ height: { xs: 280, md: 420 }, objectFit: 'cover' }}
+        />
         <Stack spacing={2} sx={{ p: { xs: 2, md: 4 } }}>
           <Typography variant="h4" component="h1">
             {product.name}
