@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: isProduction,
       emptyOutDir: true,
-      rolldownOptions: {
+      rollupOptions: {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom'],
