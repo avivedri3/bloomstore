@@ -7,7 +7,7 @@ import { getBuildDate, getPackageVersion } from '../../tools/build-metadata.cjs'
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
-  const base = process.env.VITE_BASE_URL || (isProduction ? '/BloomStore/' : '/');
+  const base = process.env.VITE_BASE_URL || (isProduction ? '/bloomstore/' : '/');
 
   return {
     root: __dirname,
@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
       sourcemap: true,
       minify: isProduction,
       emptyOutDir: true,
-      rollupOptions: {
+      rolldownOptions: {
         output: {
           manualChunks: {
             vendor: ['react', 'react-dom'],

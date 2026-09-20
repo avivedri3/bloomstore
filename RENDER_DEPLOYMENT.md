@@ -29,9 +29,9 @@ Demo logins (created by the seed service when collections are empty):
 | `JWT_EXPIRES_IN` | `8h` | Access token TTL |
 | `PORT` | set by Render | Nest listens on `process.env.PORT` |
 | `NODE_ENV` | `production` | |
-| `CORS_ORIGINS` | GitHub Pages origin | Comma-separated whitelist |
+| `CORS_ORIGINS` | `https://avivedri3.github.io` | Comma-separated whitelist |
 | `REDIS_URL` | unset | Optional write-through cache |
-| `FRONTEND_URL` | GitHub Pages URL | Used in CORS + docs links |
+| `FRONTEND_URL` | `https://avivedri3.github.io/bloomstore/` | Used in CORS + docs links |
 
 ## How to set variables
 
