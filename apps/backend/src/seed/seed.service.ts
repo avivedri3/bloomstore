@@ -15,6 +15,8 @@ export class SeedService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    await this.ensureConfiguredAccounts();
+
     const userCount = await this.users.estimatedDocumentCount();
     if (userCount === 0) {
       const passwordHash = await bcrypt.hash('Admin123!', 10);
@@ -94,6 +96,73 @@ export class SeedService implements OnModuleInit {
         },
       ]);
       this.log.log('Seeded catalog (Sunset Bouquet is out of stock and hidden from public grid)');
+    }
+  }
+
+  /** Idempotent upsert for local/demo accounts (passwords from env, not committed). */
+  private async ensureConfiguredAccounts(): Promise<void> {
+    const accounts: Array<{
+      email: string;
+      password: string;
+      fullName: string;
+      role: 'admin' | 'customer';
+    }> = [];
+
+    const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+    if (adminEmail && adminPassword) {
+      accounts.push({
+        email: adminEmail,
+        password: adminPassword,
+        fullName: process.env.SEED_ADMIN_FULL_NAME?.trim() || 'Aviv Edri',
+        role: 'admin',
+      });
+    }
+
+    const demo1Email = process.env.SEED_DEMO1_EMAIL?.trim().toLowerCase();
+    const demo1Password = process.env.SEED_DEMO1_PASSWORD;
+    if (demo1Email && demo1Password) {
+      accounts.push({
+        email: demo1Email,
+        password: demo1Password,
+        fullName: process.env.SEED_DEMO1_FULL_NAME?.trim() || 'Maya Demo',
+        role: 'customer',
+      });
+    }
+
+    const demo2Email = process.env.SEED_DEMO2_EMAIL?.trim().toLowerCase();
+    const demo2Password = process.env.SEED_DEMO2_PASSWORD;
+    if (demo2Email && demo2Password) {
+      accounts.push({
+        email: demo2Email,
+        password: demo2Password,
+        fullName: process.env.SEED_DEMO2_FULL_NAME?.trim() || 'Alex Demo',
+        role: 'customer',
+      });
+    }
+
+    for (const account of accounts) {
+      const passwordHash = await bcrypt.hash(account.password, 10);
+      await this.users.findOneAndUpdate(
+        { email: account.email },
+        {
+          $set: {
+            passwordHash,
+            fullName: account.fullName,
+            role: account.role,
+          },
+          $setOnInsert: {
+            tokenVersion: 0,
+            failedLoginAttempts: 0,
+            lockUntil: null,
+          },
+        },
+        { upsert: true },
+      );
+    }
+
+    if (accounts.length > 0) {
+      this.log.log(`Ensured ${accounts.length} configured account(s)`);
     }
   }
 }

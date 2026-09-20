@@ -1,12 +1,38 @@
+# Dependencies & build output
 node_modules
 dist
-.nx
+out-tsc
 coverage
 tmp
 *.log
-.env
-.env.local
-.DS_Store
 *.tsbuildinfo
-apps/frontend/.env
-apps/backend/.env
+
+# Nx cache and migrate leftovers
+.nx
+migrations.json
+tools/ai-migrations/
+
+# Local MongoDB install, data, and archives
+.local/
+*.tgz
+
+# Env / secrets (keep committed examples and public Vite defaults)
+.env
+.env.*
+!.env.example
+!**/.env.example
+!.env.development
+!**/.env.development
+
+# Local npm overrides
+.npmrc
+
+# Vite/Vitest generated timestamps
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea
+*.sublime-workspace

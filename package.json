@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "description": "BloomStore — Nx monorepo flower shop e-commerce (ORT diploma project)",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",

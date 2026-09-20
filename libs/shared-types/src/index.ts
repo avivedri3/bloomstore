@@ -94,6 +94,18 @@ export const addressInputSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
+export interface AddressDto {
+  id: string;
+  fullName: string;
+  phone: string;
+  city: string;
+  street: string;
+  houseNumber: string;
+  apartment?: string;
+  notes?: string;
+  isDefault: boolean;
+}
+
 export const checkoutSchema = z.object({
   addressId: z.string().min(1),
   idempotencyKey: z.string().min(8),

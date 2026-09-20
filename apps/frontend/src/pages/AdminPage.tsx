@@ -3,12 +3,15 @@ import {
   Box,
   Button,
   Chip,
-  Container,
+  Grid,
   MenuItem,
+  Paper,
+  Stack,
   Tab,
   Tabs,
   TextField,
   Typography,
+  useTheme,
 } from '@mui/material';
 import {
   Bar,
@@ -28,9 +31,13 @@ import {
   type OrderStatus,
   type ProductDto,
 } from '@bloomstore/shared-types';
+import { PageHeader } from '../components/layout/PageHeader';
+import { PageShell } from '../components/layout/PageShell';
+import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { api, unwrap } from '../services/api';
 
 export function AdminPage() {
+  const theme = useTheme();
   const [tab, setTab] = useState(0);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [orders, setOrders] = useState<OrderDto[]>([]);
@@ -61,11 +68,9 @@ export function AdminPage() {
   }, [status]);
 
   return (
-    <Container className="py-8">
-      <Typography variant="h4" className="mb-4">
-        Admin
-      </Typography>
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} className="mb-4">
+    <PageShell>
+      <PageHeader title="Admin" subtitle="Manage catalog, orders, and view store analytics." />
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3 }}>
         <Tab label="Products" />
         <Tab label="Orders" />
         <Tab label="Statistics" />
@@ -73,59 +78,85 @@ export function AdminPage() {
 
       {tab === 0 && (
         <Box>
-          <form
-            className="mb-6 grid gap-3 md:grid-cols-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void unwrap(api.post('/products', { ...form, price: Number(form.price), stock: Number(form.stock) })).then(
-                loadProducts,
-              );
-            }}
-          >
-            <TextField label="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <TextField
-              select
-              label="Category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
+          <Paper variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Stack
+              component="form"
+              spacing={2}
+              onSubmit={(e) => {
+                e.preventDefault();
+                void unwrap(api.post('/products', { ...form, price: Number(form.price), stock: Number(form.stock) })).then(
+                  loadProducts,
+                );
+              }}
             >
-              {PRODUCT_CATEGORIES.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              label="Price"
-              type="number"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
-            />
-            <TextField
-              label="Stock"
-              type="number"
-              value={form.stock}
-              onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
-            />
-            <TextField
-              className="md:col-span-2"
-              label="Image URL"
-              value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-            />
-            <Button type="submit" variant="contained">
-              Add product
-            </Button>
-          </form>
-          {products.map((p) => (
-            <div key={p.id} className="mb-2 flex items-center justify-between rounded-lg bg-white p-3">
-              <span>
-                {p.name} · ₪{p.price} · stock {p.stock} {p.isActive ? '' : '(inactive)'}
-              </span>
-              <Button size="small" onClick={() => void unwrap(api.delete(`/products/${p.id}`)).then(loadProducts)}>
-                Soft delete
+              <Typography variant="h6">Add product</Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Name"
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Category"
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                  >
+                    {PRODUCT_CATEGORIES.map((c) => (
+                      <MenuItem key={c} value={c}>
+                        {c}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Price"
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <TextField
+                    fullWidth
+                    label="Stock"
+                    type="number"
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="Image URL"
+                    value={form.imageUrl}
+                    onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                  />
+                </Grid>
+              </Grid>
+              <Button type="submit" variant="contained" sx={{ alignSelf: 'flex-start' }}>
+                Add product
               </Button>
-            </div>
+            </Stack>
+          </Paper>
+          {products.map((p) => (
+            <SurfaceCard key={p.id}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
+                <Typography>
+                  {p.name} · ₪{p.price} · stock {p.stock} {p.isActive ? '' : '(inactive)'}
+                </Typography>
+                <Button size="small" color="error" variant="outlined" onClick={() => void unwrap(api.delete(`/products/${p.id}`)).then(loadProducts)}>
+                  Soft delete
+                </Button>
+              </Stack>
+            </SurfaceCard>
           ))}
         </Box>
       )}
@@ -138,7 +169,7 @@ export function AdminPage() {
             label="Status"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="mb-4 w-56"
+            sx={{ mb: 3, minWidth: 220 }}
           >
             <MenuItem value="">all</MenuItem>
             {ORDER_STATUSES.map((s) => (
@@ -148,13 +179,15 @@ export function AdminPage() {
             ))}
           </TextField>
           {orders.map((order) => (
-            <div key={order.id} className="mb-3 rounded-xl bg-white p-4">
-              <div className="flex items-center justify-between">
+            <SurfaceCard key={order.id}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
                 <Typography fontWeight={700}>{order.orderNumber}</Typography>
-                <Chip label={order.status} />
-              </div>
-              <Typography variant="body2">₪{order.total}</Typography>
-              <div className="mt-2 flex flex-wrap gap-2">
+                <Chip label={order.status} size="small" />
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                ₪{order.total}
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
                 {ORDER_STATUSES.filter((s) => canTransition(order.status, s as OrderStatus)).map((next) => (
                   <Button
                     key={next}
@@ -167,15 +200,15 @@ export function AdminPage() {
                     {next}
                   </Button>
                 ))}
-              </div>
-            </div>
+              </Stack>
+            </SurfaceCard>
           ))}
         </Box>
       )}
 
       {tab === 2 && stats && (
         <Box>
-          <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Grid container spacing={2} sx={{ mb: 3 }}>
             {[
               ['Revenue', `₪${stats.totalRevenue}`],
               ['Open orders', stats.openOrders],
@@ -183,25 +216,29 @@ export function AdminPage() {
               ['Low stock', stats.lowStockAlerts],
               ['New users (7d)', stats.userGrowth],
             ].map(([label, value]) => (
-              <div key={String(label)} className="rounded-xl bg-white p-4 shadow-sm">
-                <Typography variant="caption">{label}</Typography>
-                <Typography variant="h6">{value}</Typography>
-              </div>
+              <Grid key={String(label)} size={{ xs: 12, sm: 6, lg: 4 }}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {label}
+                  </Typography>
+                  <Typography variant="h6">{value}</Typography>
+                </Paper>
+              </Grid>
             ))}
-          </div>
-          <div className="h-72 rounded-xl bg-white p-4">
+          </Grid>
+          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: 320 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.salesByDay}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="revenue" fill="#c45c7a" />
+                <Bar dataKey="revenue" fill={theme.palette.primary.main} radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Paper>
         </Box>
       )}
-    </Container>
+    </PageShell>
   );
 }

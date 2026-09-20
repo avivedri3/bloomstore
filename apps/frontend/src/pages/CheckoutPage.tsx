@@ -1,22 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Alert, Button, Container, MenuItem, TextField, Typography } from '@mui/material';
+import { Alert, Button, Divider, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../components/layout/PageHeader';
+import { PageShell } from '../components/layout/PageShell';
+import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { api, unwrap } from '../services/api';
 import { useCart } from '../context/CartContext';
-
-interface AddressRow {
-  _id?: string;
-  id?: string;
-  city: string;
-  street: string;
-  houseNumber: string;
-  fullName: string;
-}
+import type { AddressDto } from '@bloomstore/shared-types';
 
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { cart, refresh } = useCart();
-  const [addresses, setAddresses] = useState<AddressRow[]>([]);
+  const [addresses, setAddresses] = useState<AddressDto[]>([]);
   const [addressId, setAddressId] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -28,20 +23,20 @@ export function CheckoutPage() {
   });
 
   useEffect(() => {
-    unwrap<AddressRow[]>(api.get('/addresses')).then((rows) => {
-      setAddresses(rows);
-      const first = rows[0];
-      const id = first?._id ?? first?.id;
-      if (id) setAddressId(id);
-    }).catch((e: Error) => setError(e.message));
+    unwrap<AddressDto[]>(api.get('/addresses'))
+      .then((rows) => {
+        setAddresses(rows);
+        const first = rows[0];
+        if (first?.id) setAddressId(first.id);
+      })
+      .catch((e: Error) => setError(e.message));
   }, []);
 
   const addAddress = async (e: FormEvent) => {
     e.preventDefault();
-    const created = await unwrap<AddressRow>(api.post('/addresses', { ...form, isDefault: true }));
-    const id = created._id ?? created.id ?? '';
+    const created = await unwrap<AddressDto>(api.post('/addresses', { ...form, isDefault: true }));
     setAddresses((prev) => [created, ...prev]);
-    setAddressId(id);
+    setAddressId(created.id);
   };
 
   const placeOrder = async () => {
@@ -61,34 +56,35 @@ export function CheckoutPage() {
   };
 
   return (
-    <Container className="py-8 max-w-2xl">
-      <Typography variant="h4" className="mb-4">
-        Checkout
-      </Typography>
+    <PageShell maxWidth="sm">
+      <PageHeader title="Checkout" subtitle="Choose a delivery address and confirm your order." />
       {error && (
-        <Alert severity="error" className="mb-3">
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      <Typography className="mb-2">Cart total ₪{cart?.subtotal ?? 0}</Typography>
+      <SurfaceCard>
+        <Typography variant="subtitle1" fontWeight={600}>
+          Order summary
+        </Typography>
+        <Typography color="text.secondary">Cart total ₪{cart?.subtotal ?? 0}</Typography>
+      </SurfaceCard>
       <TextField
         select
         fullWidth
         label="Ship to"
         value={addressId}
         onChange={(e) => setAddressId(e.target.value)}
-        className="mb-4"
+        sx={{ mb: 3 }}
       >
-        {addresses.map((a) => {
-          const id = a._id ?? a.id ?? '';
-          return (
-            <MenuItem key={id} value={id}>
-              {a.fullName}, {a.street} {a.houseNumber}, {a.city}
-            </MenuItem>
-          );
-        })}
+        {addresses.map((a) => (
+          <MenuItem key={a.id} value={a.id}>
+            {a.fullName}, {a.street} {a.houseNumber}, {a.city}
+          </MenuItem>
+        ))}
       </TextField>
-      <form className="mb-6 grid gap-3" onSubmit={(e) => void addAddress(e)}>
+      <Divider sx={{ mb: 3 }} />
+      <Stack component="form" spacing={2} onSubmit={(e) => void addAddress(e)} sx={{ mb: 3 }}>
         <Typography variant="h6">New address</Typography>
         {(['fullName', 'phone', 'city', 'street', 'houseNumber'] as const).map((field) => (
           <TextField
@@ -97,15 +93,22 @@ export function CheckoutPage() {
             value={form[field]}
             onChange={(e) => setForm({ ...form, [field]: e.target.value })}
             required
+            fullWidth
           />
         ))}
         <Button type="submit" variant="outlined">
           Save address
         </Button>
-      </form>
-      <Button variant="contained" disabled={!addressId || (cart?.items.length ?? 0) === 0} onClick={() => void placeOrder()}>
+      </Stack>
+      <Button
+        variant="contained"
+        size="large"
+        fullWidth
+        disabled={!addressId || (cart?.items.length ?? 0) === 0}
+        onClick={() => void placeOrder()}
+      >
         Place order (price snapshot)
       </Button>
-    </Container>
+    </PageShell>
   );
 }

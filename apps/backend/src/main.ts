@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/api-exception.filter';
+import { setupSwagger } from './swagger/setup-swagger';
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('BloomStore');
@@ -19,7 +20,18 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new ApiExceptionFilter());
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+    }),
+  );
   const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
     .split(',')
     .map((o) => o.trim())
@@ -52,11 +64,14 @@ async function bootstrap(): Promise<void> {
     next();
   });
 
+  setupSwagger(app);
+
   const port = Number(process.env.PORT ?? 3030);
   logger.log(`Connecting to MongoDB...`);
   logger.log(`Database: ${process.env.DB_NAME ?? 'bloomstore'}`);
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}/api`);
+  logger.log(`Swagger UI: http://localhost:${port}/api/swagger`);
 }
 
 void bootstrap();

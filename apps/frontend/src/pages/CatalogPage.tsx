@@ -1,20 +1,23 @@
 import { useEffect, useState } from 'react';
 import {
-  Box,
   Button,
   Card,
   CardActions,
   CardContent,
   CardMedia,
   Chip,
-  Container,
+  FormControl,
   Grid,
+  InputLabel,
   MenuItem,
   Select,
+  Stack,
   Typography,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { PRODUCT_CATEGORIES, type ProductDto } from '@bloomstore/shared-types';
+import { PageHeader } from '../components/layout/PageHeader';
+import { PageShell } from '../components/layout/PageShell';
 import { api, unwrap } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -34,52 +37,74 @@ export function CatalogPage() {
   }, [category]);
 
   return (
-    <Container className="py-8">
-      <Box className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Typography variant="h4">Flower shop catalog</Typography>
-          <Typography color="text.secondary">
-            Inactive and out-of-stock arrangements are hidden automatically.
-          </Typography>
-        </div>
-        <Select
-          size="small"
-          displayEmpty
-          value={category}
-          onChange={(e) => setCategory(String(e.target.value))}
-        >
-          <MenuItem value="">All categories</MenuItem>
-          {PRODUCT_CATEGORIES.map((c) => (
-            <MenuItem key={c} value={c}>
-              {c}
-            </MenuItem>
-          ))}
-        </Select>
-      </Box>
-      {error && <Typography color="error">{error}</Typography>}
+    <PageShell>
+      <PageHeader
+        title="Flower shop catalog"
+        subtitle="Inactive and out-of-stock arrangements are hidden automatically."
+        action={
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel id="catalog-category">Category</InputLabel>
+            <Select
+              labelId="catalog-category"
+              label="Category"
+              value={category}
+              onChange={(e) => setCategory(String(e.target.value))}
+            >
+              <MenuItem value="">All categories</MenuItem>
+              {PRODUCT_CATEGORIES.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        }
+      />
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
       {!error && products.length === 0 && (
         <Typography color="text.secondary">No bouquets available right now.</Typography>
       )}
       <Grid container spacing={3}>
         {products.map((product) => (
           <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <CardMedia component="img" height="200" image={product.imageUrl} alt={product.name} />
-              <CardContent>
-                <Chip size="small" label={product.category} className="mb-2" />
-                <Typography variant="h6">{product.name}</Typography>
-                <Typography color="text.secondary" className="line-clamp-2">
+              <CardContent sx={{ flex: 1 }}>
+                <Chip size="small" label={product.category} sx={{ mb: 1.5 }} />
+                <Typography variant="h6" component="h2" gutterBottom>
+                  {product.name}
+                </Typography>
+                <Typography
+                  color="text.secondary"
+                  variant="body2"
+                  sx={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
                   {product.description}
                 </Typography>
-                <Typography className="mt-2 font-semibold">₪{product.price}</Typography>
-                <Typography variant="caption">In stock: {product.stock}</Typography>
+                <Stack direction="row" spacing={2} alignItems="baseline" sx={{ mt: 2 }}>
+                  <Typography variant="h6" color="primary.main">
+                    ₪{product.price}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    In stock: {product.stock}
+                  </Typography>
+                </Stack>
               </CardContent>
-              <CardActions>
+              <CardActions sx={{ px: 2, pb: 2 }}>
                 <Button size="small" component={RouterLink} to={`/products/${product.id}`}>
                   Details
                 </Button>
                 {user && (
-                  <Button size="small" onClick={() => void upsert(product.id, 1)}>
+                  <Button size="small" variant="contained" onClick={() => void upsert(product.id, 1)}>
                     Add to cart
                   </Button>
                 )}
@@ -88,6 +113,6 @@ export function CatalogPage() {
           </Grid>
         ))}
       </Grid>
-    </Container>
+    </PageShell>
   );
 }
