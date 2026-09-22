@@ -10,7 +10,7 @@
 | 2.2 | 11 קולקציות ושדות | `apps/backend/src/models/*.schema.ts` |
 | 3 | אחד-עשר המסכים | `apps/frontend/src/App.tsx`, `apps/frontend/src/pages/AdminPage.tsx` |
 | 4.1–4.4 | מעטפת, קטלוג, כרטיס | `apps/frontend/src/main.tsx`, `App.tsx`, `context/AuthContext.tsx`, `context/CartContext.tsx`, `pages/CatalogPage.tsx`, `components/ProductCard.tsx`, `services/api.ts` |
-| 4.5 | מדריך הסגנון | `apps/frontend/STYLE_GUIDE.md`, `apps/frontend/src/theme/tokens.ts`, `apps/frontend/src/theme/theme.ts` |
+| 4.5 | עיצוב הפרויקט | `apps/frontend/STYLE_GUIDE.md`, `apps/frontend/src/theme/tokens.ts`, `apps/frontend/src/theme/theme.ts` |
 | 5 | הזדהות ונעילה | `apps/backend/src/auth/auth.controller.ts`, `auth.service.ts`, `token-version.guard.ts`, `jwt.strategy.ts`, `models/user.schema.ts`, `libs/shared-types/src/index.ts` (`MAX_FAILED_LOGINS`) |
 | 6 | ניהול, ואישור או ביטול הזמנה בסעיף 6.2 | `products.controller.ts`, `products.service.ts`, `orders.controller.ts`, `orders.service.ts`, `analytics.service.ts`, `auth/admin.guard.ts` |
 | 7 | עגלה, קופה, ביטול | `carts/carts.service.ts`, `cache/cache.service.ts`, `orders/orders.service.ts`, `webhooks/webhooks.service.ts` |
