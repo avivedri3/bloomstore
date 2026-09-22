@@ -75,9 +75,8 @@
 
 [פרק 8 — אבטחה, API וביצועים](#ch8)
 
-- [8.1 שכבות האבטחה](#ch8-1)
-- [8.2 נקודות הקצה](#ch8-2)
-- [8.3 ביצועים, אמינות ו-Design Patterns](#ch8-3)
+- [8.1 נקודות הקצה](#ch8-1)
+- [8.2 ביצועים, אמינות ו-Design Patterns](#ch8-2)
 
 [פרק 9 — תהליך הפיתוח, בדיקות והפצה](#ch9)
 
@@ -95,8 +94,6 @@
 ### הצהרת הסטודנט
 
 אני מצהיר כי העבודה המוגשת להלן נעשתה על ידי באופן עצמאי, על פי ידיעתי האישית, תוך שימוש בקוד, במאמרים ובמקורות אחרים על פי כללי האתיקה האקדמית ובציון מקורות מתאימים. כל הנתונים, שמות המשתמשים והסכומים המופיעים במסמך זה משמשים להדגמה לצורכי לימוד בלבד.
-
-פרטי הזיהוי האקדמי מרוכזים ב-`docs/student-qa-appendix.md`. המרת הקוד אל הספר נעשית לפי `docs/book-conversion-guide.md` והנספחים ב-`docs/appendices/`. הגרסה החיה של ספר זה נגישה ב-`GET /api/docs`.
 
 ---
 
@@ -150,16 +147,6 @@ BloomStore היא חנות פרחים מקוונת מלאה (Full-Stack E-Commer
 
 הספר סוקר את המערכת כולה, ומעמיק בשלושה אזורים שנבחרו להצגה מפורטת: יסודות צד הלקוח (פרק 4), מודול ההזדהות בצד השרת (פרק 5) ומודול הניהול בצד השרת (פרק 6). שאר הפרקים מציגים את היקף המערכת, את מודל הנתונים, את תהליך ההפצה ואת מערך הבדיקות.
 
-```mermaid
-flowchart LR
-  SPA["React SPA"] --> API["NestJS Controllers"]
-  API --> SVC["Services"]
-  SVC --> DB[("MongoDB")]
-  SVC --> CACHE["Redis או זיכרון"]
-  SPA --> PAGES["GitHub Pages"]
-  API --> RENDER["Render"]
-```
-
 איור 1 — זרימת המערכת: לקוח, שרת, נתונים והפצה
 
 ---
@@ -169,21 +156,6 @@ flowchart LR
 ## פרק 2 — ארכיטקטורה ומודל הנתונים
 
 BloomStore בנויה על ארכיטקטורת שלוש שכבות: ממשק משתמש, לוגיקה עסקית ומסד נתונים. אותו עיקרון חוזר בתוך השרת. Controller מחלץ פרמטרים, מאמת קלט ב-Zod ומחזיר מעטפת `ApiResponse`. הוא אינו ניגש למסד הנתונים. Service מחזיק את כללי המלאי, ההזמנה והאבטחה. Model של Mongoose הוא שכבת ההתמדה.
-
-```mermaid
-flowchart TB
-  subgraph presentation [Presentation]
-    UI["React pages"]
-    CTRL["NestJS controllers"]
-  end
-  subgraph business [Business]
-    SVC["services"]
-  end
-  subgraph data [Data]
-    MODELS["Mongoose models"]
-  end
-  UI --> CTRL --> SVC --> MODELS
-```
 
 איור 2 — ארכיטקטורת שלוש שכבות: Presentation / Business / Data
 
@@ -479,18 +451,6 @@ flowchart TB
 
 מעבר ל-`confirmed` מסמן את התשלום כ-`captured`. מעבר ל-`cancelled` מפעיל החזרת מלאי בטרנזקציה ומסמן את התשלום כ-`refunded`. אחרי משלוח אי אפשר לבטל דרך המטריצה, והשירות חוסם restock גם אם הסטטוס כבר `shipped`, `delivered` או `cancelled`.
 
-```mermaid
-stateDiagram-v2
-  [*] --> pending_payment
-  pending_payment --> confirmed
-  pending_payment --> cancelled
-  confirmed --> processing
-  confirmed --> cancelled
-  processing --> shipped
-  processing --> cancelled
-  shipped --> delivered
-```
-
 איור 3 — מפת סטטוסי ההזמנה
 
 <a id="ch6-4"></a>
@@ -565,74 +525,45 @@ stateDiagram-v2
 
 <a id="ch8-1"></a>
 
-### 8.1 שכבות האבטחה
+### 8.1 נקודות הקצה
 
-כל בקשה עוברת שרשרת בדיקות בשרת. מנגנוני ההזדהות והניהול מפורטים בפרקים 5 ו-6. הטבלה מסכמת את התמונה המלאה.
+הבסיס המקומי הוא `http://localhost:3030/api`.
 
-| שכבה | כלי | מפני מה היא מגנה |
+| פעולה | נתיב | תיאור |
 | --- | --- | --- |
-| כותרות HTTP | Helmet | Clickjacking, MIME sniffing, וחשיפת מידע על השרת. מדיניות CSP מוגדרת ב-`main.ts`, ו-`crossOriginResourcePolicy` הוא `cross-origin` כדי ש-GitHub Pages יוכל לקרוא ל-API |
-| מקורות מורשים | CORS | בקשות מדומיינים שאינם ב-`CORS_ORIGINS`. תמיד מותרים גם `http://localhost:3000` ו-`https://avivedri3.github.io` |
-| רשת פרטית | `Access-Control-Allow-Private-Network` | חסימת Chrome כשאתר ציבורי קורא ל-API על המחשב המקומי |
-| הגבלת קצב | מונה בזיכרון ב-`main.ts` | יותר מ-20 בקשות לדקה מאותו IP על login, register והתראת מלאי. התשובה היא 429 עם `RATE_LIMITED` |
-| אימות זהות | JWT + `tokenVersion` | גישה ללא הזדהות, ושימוש ב-Token שבוטל |
-| הרשאות | `AdminGuard` | פעולות ניהול על ידי לקוח |
-| ולידציה | Zod ב-`libs/shared-types` | קלט לא תקין לפני הלוגיקה |
-| הגנת שאילתה | `MongoSanitizeMiddleware` | מפתחות שמתחילים ב-`$` או שמכילים `.` בגוף ובפרמטרים |
-| מניעת כפילות | `idempotencykeys` | יצירת הזמנה כפולה |
-| סיסמאות | bcrypt, 10 סבבים | חשיפת סיסמאות במקרה של דליפת המסד |
-| מעקב | `auditlogs` | פעולות הרשמה, התחברות, ניהול מוצרים ושינוי סטטוס בלי תיעוד |
-| סודות | בדיקה בעלייה | התהליך נעצר אם חסרים `JWT_SECRET` או `MONGODB_URI` |
+| POST | `/api/auth/register` | יצירת לקוח |
+| POST | `/api/auth/login` | התחברות |
+| POST | `/api/auth/logout` | התנתקות |
+| GET | `/api/auth/me` | המשתמש המחובר |
+| GET | `/api/products` | קטלוג |
+| GET | `/api/products/:id` | פרטי מוצר |
+| POST | `/api/products/:id/stock-alerts` | התראת מלאי |
+| GET | `/api/products/admin` | כל המוצרים |
+| POST | `/api/products` | יצירת מוצר |
+| PATCH | `/api/products/:id` | עדכון מוצר |
+| DELETE | `/api/products/:id` | מחיקה רכה |
+| GET | `/api/cart` | שליפת עגלה |
+| PUT | `/api/cart/items` | עדכון פריט |
+| DELETE | `/api/cart/items/:productId` | הסרת פריט |
+| GET | `/api/addresses` | רשימת כתובות |
+| POST | `/api/addresses` | יצירת כתובת |
+| POST | `/api/orders/checkout` | יצירת הזמנה |
+| GET | `/api/orders/mine` | ההזמנות שלי |
+| GET | `/api/orders/:id` | פרטי הזמנה |
+| POST | `/api/orders/:id/cancel` | ביטול הזמנה |
+| GET | `/api/orders/admin` | כל ההזמנות |
+| PATCH | `/api/orders/:id/status` | שינוי סטטוס |
+| GET | `/api/admin/stats` | לוח בקרה |
+| POST | `/api/webhooks/payments` | אירוע תשלום |
+| GET | `/api/health` | בדיקת חיות |
+| GET | `/api/docs` | ספר הפרויקט |
+| GET | `/api/docs/readme` | מדריך ה-API |
 
-טבלה 9 — שכבות האבטחה והאיום שכל אחת חוסמת
-
-```mermaid
-flowchart LR
-  CLIENT["דפדפן"] --> HELMET["Helmet + CORS"]
-  HELMET --> RATE["Rate limit"]
-  RATE --> SAN["Mongo sanitize"]
-  SAN --> CTRL["Controller + Zod"]
-  CTRL --> GUARD["JWT + tokenVersion + Admin"]
-  GUARD --> SVC["Service"]
-```
-
-איור 4 — מסלול בקשה מהלקוח עד השירות
+טבלה 9 — נקודות הקצה
 
 <a id="ch8-2"></a>
 
-### 8.2 נקודות הקצה
-
-הבסיס המקומי הוא `http://localhost:3030/api`. הממשק המתועד הוא Swagger ב-`/api/swagger`.
-
-| נתיב | פועל | הגנה | תיאור |
-| --- | --- | --- | --- |
-| `/api/auth/register` | POST | Rate limit | יצירת לקוח והנפקת Token |
-| `/api/auth/login` | POST | Rate limit | התחברות. כישלון חוזר נועל חשבון |
-| `/api/auth/logout` | POST | JWT | הגדלת `tokenVersion` |
-| `/api/auth/me` | GET | JWT | המשתמש המחובר, אחרי בדיקת גרסה |
-| `/api/products` · `/:id` | GET | ציבורי | קטלוג ופרטי מוצר, כולל אזל מהמלאי |
-| `/api/products/:id/stock-alerts` | POST | Rate limit | הרשמה להתראת חזרה למלאי |
-| `/api/products/admin` | GET | JWT + admin | כל המוצרים, כולל לא פעילים |
-| `/api/products` · `/:id` | POST / PATCH / DELETE | JWT + admin | יצירה, עדכון, מחיקה רכה |
-| `/api/cart` | GET | JWT | שליפת עגלה |
-| `/api/cart/items` | PUT | JWT | הוספה או עדכון כמות |
-| `/api/cart/items/:productId` | DELETE | JWT | הסרת פריט |
-| `/api/addresses` | GET / POST | JWT | פנקס כתובות |
-| `/api/orders/checkout` | POST | JWT + Idempotency | יצירת הזמנה מהעגלה |
-| `/api/orders/mine` · `/:id` | GET | JWT | רשימת הלקוח ופרטי הזמנה |
-| `/api/orders/:id/cancel` | POST | JWT | ביטול והחזרת מלאי |
-| `/api/orders/admin` | GET | JWT + admin | כל ההזמנות, עם `?status=` |
-| `/api/orders/:id/status` | PATCH | JWT + admin | מעבר סטטוס חוקי |
-| `/api/admin/stats` | GET | JWT + admin | נתוני לוח הבקרה |
-| `/api/webhooks/payments` | POST | מזהה אירוע | קליטה אידמפוטנטית. אינה מאשרת תשלום |
-| `/api/health` | GET | ציבורי | בדיקת חיות |
-| `/api/docs` · `/api/docs/readme` | GET | ציבורי | ספר הפרויקט ומדריך ה-API |
-
-טבלה 10 — נקודות הקצה ורמת ההגנה של כל אחת
-
-<a id="ch8-3"></a>
-
-### 8.3 ביצועים, אמינות ו-Design Patterns
+### 8.2 ביצועים, אמינות ו-Design Patterns
 
 - **מקור אמת יחיד לעגלה.** MongoDB נשאר גם כש-Redis כבוי.
 - **שאילתות דשבורד במקביל.** `Promise.all` במקום שרשרת שמחברת זמני תגובה.
@@ -653,7 +584,7 @@ flowchart LR
 | Soft Delete | `Product.isActive` | הסתרה מהקטלוג בלי לשבור היסטוריה |
 | Middleware Chain | Helmet, CORS, rate limit, sanitize | שכבות אבטחה בסדר קבוע |
 
-טבלה 11 — דפוסי העיצוב ומקום היישום
+טבלה 10 — דפוסי העיצוב ומקום היישום
 
 ---
 
@@ -679,7 +610,7 @@ flowchart LR
 | מנהל | `admin@bloomstore.com` | `Admin123!` |
 | לקוח | `customer@bloomstore.com` | `Customer123!` |
 
-טבלה 12 — משתמשי הדגמה
+טבלה 11 — משתמשי הדגמה
 
 <a id="ch9-2"></a>
 
@@ -706,7 +637,7 @@ flowchart LR
 | 13 | מפתח הזרקה | שדה שמתחיל ב-`$` בגוף הבקשה | המפתח מוסר לפני השירות | `MongoSanitizeMiddleware` |
 | 14 | נפילת Redis | שליפת עגלה בלי `REDIS_URL` | העגלה נקראת מ-MongoDB | `CacheService` |
 
-טבלה 13 — מערך הבדיקות
+טבלה 12 — מערך הבדיקות
 
 זרימת CI (`.github/workflows/ci.yml`) רצה על `main`, על `develop` ועל pull request אל `main`: checkout, התקנת תלויות, lint, typecheck, test, build ו-`npm audit`, על הפרויקטים המושפעים ב-Nx.
 
@@ -723,7 +654,7 @@ flowchart LR
 | Render Blueprint (`render.yaml`) | בונה את `apps/backend/Dockerfile` מהשורש ומפריס בכל דחיפה ל-`main` (`autoDeployTrigger: commit`) |
 | `deploy-backend.yml` | מאמת `nx build` של השרת. אם הוגדר הסוד `RENDER_DEPLOY_HOOK`, הוא גם קורא ל-hook. כש-auto-deploy של Render דולק, משאירים את ה-hook ריק כדי לא לבנות פעמיים |
 
-טבלה 14 — תהליך ההפצה
+טבלה 13 — תהליך ההפצה
 
 כתובות:
 
@@ -777,7 +708,7 @@ docker build -f apps/backend/Dockerfile -t bloomstore-api .
 
 1. ספק סליקה אמיתי על גבי קולקציות ה-webhook שכבר קולטות אירוע פעם אחת.
 2. קיצור חיי ה-Token והוספת Refresh בצד הלקוח.
-3. חבילת בדיקות E2E שרצה על תרחישי טבלה 13 בכל דחיפה.
+3. חבילת בדיקות E2E שרצה על תרחישי טבלה 12 בכל דחיפה.
 4. חיפוש טקסט מלא בקטלוג.
 5. דירוגים וביקורות למוצרים.
 6. התראת דוא״ל גם בשינוי סטטוס הזמנה, על גבי `MailService` שכבר שולח התראת מלאי.
