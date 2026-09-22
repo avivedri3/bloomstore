@@ -509,6 +509,26 @@ def render_list_item(document: Document, text: str, ordered: bool) -> None:
     add_inline(paragraph, prefix + text)
 
 
+IMAGE_RE = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
+
+
+def render_image(document: Document, relative: str) -> None:
+    path = (ROOT / "docs" / relative).resolve()
+    if not path.is_file():
+        raise SystemExit(f"Missing figure image: {path}")
+    paragraph = document.add_paragraph()
+    paragraph.style = document.styles["Normal"]
+    paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    # A bitmap is not mixed text. Paragraph bidi would not change the pixels,
+    # and Unicode bidi marks are never written into the file.
+    mark_bidi(paragraph, False)
+    paragraph.paragraph_format.space_before = Pt(8)
+    paragraph.paragraph_format.space_after = Pt(2)
+    paragraph.paragraph_format.line_spacing = 1.0
+    run = paragraph.add_run()
+    run.add_picture(str(path), width=Cm(15))
+
+
 def render_code(document: Document, lines: list[str]) -> None:
     paragraph = document.add_paragraph()
     paragraph.style = document.styles["Normal"]
@@ -698,6 +718,12 @@ def parse_blocks(text: str) -> list[tuple]:
             index += 1
             continue
 
+        image = IMAGE_RE.match(stripped)
+        if image:
+            blocks.append(("image", image.group(2).strip()))
+            index += 1
+            continue
+
         if not stripped:
             index += 1
             continue
@@ -747,6 +773,8 @@ def render(document: Document, blocks: list[tuple]) -> str:
             render_list_item(document, payload, ordered=True)
         elif kind == "code":
             render_code(document, payload)
+        elif kind == "image":
+            render_image(document, payload)
         elif kind == "table":
             render_table(document, payload)
     return author
@@ -759,12 +787,12 @@ def assert_book(document: Document, output: Path) -> None:
         raise SystemExit(f"Missing chapters: {', '.join(missing)}")
     captions = [paragraph.text for paragraph in document.paragraphs if re.match(r"^טבלה \d+ —", paragraph.text)]
     figures = [paragraph.text for paragraph in document.paragraphs if re.match(r"^איור \d+ —", paragraph.text)]
-    if len(captions) != 14:
-        raise SystemExit(f"Expected 14 table captions, found {len(captions)}")
+    if len(captions) != 13:
+        raise SystemExit(f"Expected 13 table captions, found {len(captions)}")
     if len(figures) != 3:
         raise SystemExit(f"Expected 3 figure captions, found {len(figures)}")
-    if len(document.tables) != 14:
-        raise SystemExit(f"Expected 14 tables, found {len(document.tables)}")
+    if len(document.tables) != 13:
+        raise SystemExit(f"Expected 13 tables, found {len(document.tables)}")
     for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנטית", "אני מצהירה", "docker build", "תוכן עניינים"):
         if needle not in text:
             raise SystemExit(f"Missing expected text: {needle}")
@@ -774,8 +802,14 @@ def assert_book(document: Document, output: Path) -> None:
         raise SystemExit("Output is not a docx zip")
     with zipfile.ZipFile(output) as archive:
         xml = archive.read("word/document.xml")
+        media = [name for name in archive.namelist() if name.startswith("word/media/")]
     if "w:bidi".encode() not in xml:
         raise SystemExit("Document is missing right-to-left markers")
+    leaked = [ch for ch in "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069" if ch.encode("utf-8") in xml]
+    if leaked:
+        raise SystemExit("Unicode bidi controls leaked into the Word file")
+    if len(media) != 3:
+        raise SystemExit(f"Expected 3 code screenshots, found {len(media)}")
 
 
 def build(source: Path, output: Path) -> None:
