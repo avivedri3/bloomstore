@@ -1,0 +1,12 @@
+# Context is the repository root (apps/backend/Dockerfile).
+node_modules
+dist
+.git
+.nx
+coverage
+tmp
+.vscode
+**/.env
+**/.env.*
+!**/.env.example
+apps/frontend

@@ -105,9 +105,9 @@ jobs:
         if: steps.affected.outputs.affected == 'true'
         run: |
           if [[ -z "${{ env.RENDER_DEPLOY_HOOK }}" ]]; then
-            echo "⚠️ RENDER_DEPLOY_HOOK secret is not configured."
-            echo "ℹ️ Add it under Settings → Secrets and variables → Actions."
-            echo "ℹ️ Render can still auto-deploy from Git; see RENDER_DEPLOYMENT.md."
+            echo "RENDER_DEPLOY_HOOK is not set."
+            echo "Push to main still deploys when the Render Blueprint is connected (render.yaml, autoDeployTrigger: commit)."
+            echo "Add the hook only if auto-deploy is turned off. See RENDER_DEPLOYMENT.md."
             exit 0
           fi
 

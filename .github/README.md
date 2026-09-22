@@ -16,8 +16,8 @@ Automated CI/CD for BloomStore, based on the iAgent pipeline and updated for thi
 ### Deploy Backend to Render (`deploy-backend.yml`)
 
 - **Triggers:** Push to `main` (when `@bloomstore/backend` is affected), manual dispatch
-- **Purpose:** Verify the NestJS production build, then POST the Render deploy hook
-- Render still builds from `apps/backend/Dockerfile` with context `.` (see `RENDER_DEPLOYMENT.md`)
+- **Purpose:** Verify the NestJS production build. If `RENDER_DEPLOY_HOOK` is set, POST that hook
+- The service itself deploys from `render.yaml` on every push to `main` (Dockerfile `apps/backend/Dockerfile`, context `.`)
 
 ### Deploy to GitHub Pages (`deploy-gh-pages.yml`)
 
@@ -30,7 +30,7 @@ Automated CI/CD for BloomStore, based on the iAgent pipeline and updated for thi
 
 1. Push to `main`
 2. CI runs quality, tests, build, and audit
-3. If the backend changed, Render is triggered via `RENDER_DEPLOY_HOOK`
+3. Render's Git integration deploys the API from `render.yaml` on that push. The backend workflow verifies the Nx build and triggers `RENDER_DEPLOY_HOOK` only when that secret exists
 4. GitHub Pages then rebuilds the storefront (same chain as iAgent: backend workflow → Pages)
 
 Manual:
@@ -47,7 +47,7 @@ gh workflow run deploy-gh-pages.yml
 | --- | --- | --- |
 | `VITE_BASE_URL` | workflow env | `/bloomstore/` |
 | `VITE_API_BASE_URL` | repo **variable** (optional) | API base including `/api`. Unset builds call `http://localhost:3030/api` |
-| `RENDER_DEPLOY_HOOK` | repo **secret** | Render deploy hook URL |
+| `RENDER_DEPLOY_HOOK` | repo **secret** (optional) | Extra Render deploy hook. Leave unset while `render.yaml` auto-deploy is on |
 
 GitHub → **Settings → Pages → Source: GitHub Actions**.
 
@@ -59,4 +59,4 @@ GitHub → **Settings → Pages → Source: GitHub Actions**.
 
 **Catalog calls localhost** — that is the fallback when `VITE_API_BASE_URL` is unset. Set the variable to the live API, then rerun **Deploy to GitHub Pages**.
 
-**Render not updating** — add `RENDER_DEPLOY_HOOK`, or deploy from the Render dashboard as in `RENDER_DEPLOYMENT.md`.
+**Render not updating** — the Blueprint in `render.yaml` must be applied once (see `RENDER_DEPLOYMENT.md`). After that, pushes to `main` deploy without a hook.

@@ -6,9 +6,9 @@ BloomStore does not need Docker Hub. Render builds the backend image from this r
 
 | Secret | Required | Used by |
 | --- | --- | --- |
-| `RENDER_DEPLOY_HOOK` | For automatic API deploys | `deploy-backend.yml` |
+| `RENDER_DEPLOY_HOOK` | Optional | `deploy-backend.yml` |
 
-Create the hook in Render → BloomStore web service → **Settings → Deploy Hook**.
+Pushes to `main` deploy the API through the Render Blueprint (`render.yaml`, `autoDeployTrigger: commit`). Add `RENDER_DEPLOY_HOOK` only when that auto-deploy is turned off. Create the hook in Render → BloomStore web service → **Settings → Deploy Hook**.
 
 `GITHUB_TOKEN` is provided by Actions; do not add it yourself.
 

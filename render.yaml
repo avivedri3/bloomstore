@@ -1,0 +1,29 @@
+# Render Blueprint for the BloomStore API.
+# Create it once: Dashboard → New → Blueprint → repo avivedri3/bloomstore.
+# After that, every push to main deploys this Docker web service.
+services:
+  - type: web
+    name: bloomstore
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./apps/backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_NAME
+        value: bloomstore
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: CORS_ORIGINS
+        value: https://avivedri3.github.io
+      - key: FRONTEND_URL
+        value: https://avivedri3.github.io/bloomstore/
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        sync: false

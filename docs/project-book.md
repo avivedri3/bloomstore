@@ -227,7 +227,7 @@ npm run dev
 ### פריסה
 
 - Frontend + HTML של הספר: GitHub Pages (`deploy-gh-pages.yml`, מקור: GitHub Actions) — https://avivedri3.github.io/bloomstore/
-- Backend: Render (`deploy-backend.yml` דרך Deploy Hook, Dockerfile בנתיב `apps/backend/Dockerfile`, context שורש הריפו) לפי `RENDER_DEPLOYMENT.md`
+- Backend: Render Blueprint (`render.yaml`, ענף `main`, `autoDeployTrigger: commit`). Docker: `apps/backend/Dockerfile`, context שורש הריפו. `deploy-backend.yml` מאמת את בניית Nx ומפעיל Deploy Hook רק אם הסוד `RENDER_DEPLOY_HOOK` קיים. פירוט ב-`RENDER_DEPLOYMENT.md`
 
 ---
 
