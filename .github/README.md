@@ -22,9 +22,10 @@ Automated CI/CD for BloomStore, based on the iAgent pipeline and updated for thi
 ### Deploy to GitHub Pages (`deploy-gh-pages.yml`)
 
 - **Triggers:** After a successful backend deploy workflow (including backend-unaffected skips), or manual dispatch
-- **Purpose:** Build the React SPA + project-book HTML and publish with GitHub Actions Pages
+- **Purpose:** Build the React SPA, convert the project book to HTML, then convert it to DOCX, and publish both with GitHub Actions Pages
 - **Live:** https://avivedri3.github.io/bloomstore/
 - **Docs:** https://avivedri3.github.io/bloomstore/docs/
+- **Project book DOCX:** https://avivedri3.github.io/bloomstore/docs/project-book.docx
 
 ## Deployment process
 

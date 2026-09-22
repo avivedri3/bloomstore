@@ -14,7 +14,7 @@
 6. **Orders**: state machine `pending_payment → confirmed → processing → shipped → delivered` (or `cancelled`). Restock inventory in a transaction when cancelling before `shipped`.
 7. **Price snapshot**: lock unit price and product details on the order document at creation time.
 8. **Cart cache**: write-through — MongoDB is source of truth; Redis (or in-memory fallback) is a cache, never the only copy.
-9. **Docs sync**: follow `DOCS_SYNC.md` whenever domain models or APIs change. Academic copy lives in `docs/project-book.md` and is served by `GET /api/docs`.
+9. **Docs sync**: follow `docs/book-conversion-guide.md` whenever domain models, APIs, style, tests, or deployment change. Academic copy lives in `docs/project-book.md` and is served by `GET /api/docs`. Identity is appendix A (`docs/student-qa-appendix.md`). The code-to-chapter map is appendix B (`docs/appendices/source-map.md`). The required outline is appendix C (`docs/appendices/book-outline.md`). Word export is an additional step, designed only by `docs/docx-style-guide.md`; do not replace the Markdown source. Do not invent identity or copy another project's stack into the book. `DOCS_SYNC.md` only points at this folder.
 
 ## Project map
 

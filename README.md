@@ -41,6 +41,11 @@ apps/frontend    React SPA
 apps/backend     NestJS 3-tier API
 libs/shared-types
 docs/project-book.md
+docs/project-book.docx
+docs/book-conversion-guide.md
+docs/docx-style-guide.md
+docs/student-qa-appendix.md
+docs/appendices/
 .github/workflows
 ```
 
@@ -51,13 +56,14 @@ npx nx serve frontend
 npx nx serve backend
 npx nx test backend
 npx nx build frontend --configuration=production
+npm run book:docx
 ```
 
 ## Architecture (enforced)
 
 Presentation (`controllers`) → business (`services`) → data (`models`). Controllers return `{ success, data }` or `{ success: false, error }`. Public catalog hides `isActive === false` (out-of-stock items remain listed). Orders use a status state machine and price snapshots. Logout increments `tokenVersion` so existing JWTs are rejected.
 
-Academic documentation: [docs/project-book.md](./docs/project-book.md). Agent rules: [AGENTS.md](./AGENTS.md). Render: [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md). Docs sync: [DOCS_SYNC.md](./DOCS_SYNC.md).
+Academic documentation: [docs/project-book.md](./docs/project-book.md). Conversion procedure and appendices: [docs/book-conversion-guide.md](./docs/book-conversion-guide.md). Word design: [docs/docx-style-guide.md](./docs/docx-style-guide.md). Agent rules: [AGENTS.md](./AGENTS.md). Render: [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md). Docs sync pointer: [DOCS_SYNC.md](./DOCS_SYNC.md).
 
 ## GitHub Pages
 

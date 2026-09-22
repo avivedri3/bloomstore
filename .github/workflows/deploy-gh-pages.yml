@@ -136,11 +136,19 @@ jobs:
           <body>
             <h1>ספר פרויקט — BloomStore</h1>
             <p><a href="../">חזרה לחנות</a></p>
+            <p><a href="project-book.docx">הורדת הספר כקובץ Word</a></p>
             <pre>{escaped}</pre>
           </body>
           </html>"""
           Path("dist/apps/frontend/docs/index.html").write_text(page, encoding="utf-8")
           PY
+
+      - name: 📄 Convert project book to DOCX
+        if: steps.affected.outputs.affected == 'true'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/docx"
+          "$RUNNER_TEMP/docx/bin/pip" install -r scripts/requirements-docx.txt
+          "$RUNNER_TEMP/docx/bin/python" scripts/convert-project-book-docx.py --output dist/apps/frontend/docs/project-book.docx
 
       - name: 📊 Verify build output
         if: steps.affected.outputs.affected == 'true'
@@ -160,6 +168,13 @@ jobs:
             echo "✅ docs/index.html exists"
           else
             echo "❌ docs/index.html missing"
+            exit 1
+          fi
+
+          if [[ -f "dist/apps/frontend/docs/project-book.docx" ]]; then
+            echo "✅ docs/project-book.docx exists"
+          else
+            echo "❌ docs/project-book.docx missing"
             exit 1
           fi
 
@@ -209,6 +224,7 @@ jobs:
           echo "✅ Frontend deployed successfully!"
           echo "🌐 URL: https://${{ github.repository_owner }}.github.io/bloomstore/"
           echo "📚 Docs: https://${{ github.repository_owner }}.github.io/bloomstore/docs/"
+          echo "📄 DOCX: https://${{ github.repository_owner }}.github.io/bloomstore/docs/project-book.docx"
           echo "🕐 Deployed at: $(date)"
           echo "📝 Commit: ${{ github.sha }}"
           echo "👤 Triggered by: ${{ github.actor }}"

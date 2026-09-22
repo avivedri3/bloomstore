@@ -18,7 +18,8 @@
     "lint": "npx nx run-many --target=lint --projects=frontend,backend,shared-types",
     "typecheck": "npx nx run-many --target=typecheck --projects=frontend,backend,shared-types",
     "graph": "npx nx graph",
-    "affected": "npx nx affected"
+    "affected": "npx nx affected",
+    "book:docx": "python3 scripts/convert-project-book-docx.py"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

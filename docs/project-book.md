@@ -1,240 +1,797 @@
-# ספר פרויקט — BloomStore
+<div dir="rtl">
 
-**שם הפרויקט:** BloomStore — חנות פרחים מקוונת  
-**מסגרת:** פרויקט גמר — הנדסאי תוכנה, אורט  
-**ארכיטקטורה:** שלוש שכבות, Nx Monorepo, TypeScript מקצה לקצה  
-**תאריך:** ספטמבר 2026
+# בית הספר אורט סינגאלובסקי
 
-מסמך זה מיושר לקוד בפועל לפי `DOCS_SYNC.md`. גרסה חיה: `GET /api/docs`.
+## מחלקת תוכנה — מסלול טכנאי תוכנה
+
+# ספר פרויקט
+
+# BloomStore
+
+חנות פרחים מקוונת — Full-Stack E-Commerce
+
+מוגש על ידי
+
+אביב לייסטן · ת״ז 206917353
+050-5806570
+
+בהנחיית
+
+מור ברגיג
+052-8612379
+דרך הטייסים 28, תל אביב
+
+22 בספטמבר 2026
+
+</div>
 
 ---
 
-## פרק 1 — מבוא
+## תוכן עניינים
 
-BloomStore היא מערכת מסחר אלקטרוני למכירת זרי פרחים, צמחים וסידורים לאירועים. הלקוח גולש בקטלוג ציבורי, מנהל עגלה, משלם (סימולציה) ומעקב אחרי הזמנות. מנהל המערכת מנהל מלאי, מקדם סטטוס משלוח וצופה בלוח סטטיסטיקות.
+[פרק 1 — מבוא ותיאור הפרויקט](#ch1)
 
-### מטרות
+- [1.1 מטרות המערכת](#ch1-1)
+- [1.2 סקירת מצב קיים בשוק](#ch1-2)
+- [1.3 חלוקת תפקידים ומבנה הספר](#ch1-3)
 
-1. לממש חנות מלאה לפי דרישות ספר הפרויקט של אורט (שלוש שכבות, מסד נתונים, בדיקות, הדרכה).
-2. להפגין דפוסי עיצוב: Price Snapshot, Write-Through Cache, State Machine, Token Versioning, Account Lockout.
-3. לספק CI/CD: GitHub Actions לאיכות קוד, GitHub Pages ל-SPA ולספר הפרויקט, Render ל-API.
+[פרק 2 — ארכיטקטורה ומודל הנתונים](#ch2)
 
-### בעיה עסקית
+- [2.1 טכנולוגיות](#ch2-1)
+- [2.2 מודל הנתונים](#ch2-2)
 
-חנויות פרחים קטנות מתקשות לנהל מלאי בזמן אמת, למנוע מכירה במחיר ישן, ולבטל הזמנות תוך החזרת מלאי. BloomStore נועלת מחיר בהזמנה, מסתירה מוצרים לא פעילים, מציגה פריטים שאזלו עם הרשמה להתראת מלאי, ומבצעת restock טרנזקציונלי בביטול לפני משלוח.
+[פרק 3 — דרישות פונקציונליות](#ch3)
+
+[פרק 4 — צד הלקוח: יסודות הממשק](#ch4)
+
+- [4.1 ממשק החנות — מבט מקדים](#ch4-1)
+- [4.2 App.tsx וספקי ה-state](#ch4-2)
+- [4.3 CatalogPage.tsx — דף הבית](#ch4-3)
+- [4.4 ProductCard.tsx — כרטיסיית מוצר](#ch4-4)
+- [4.5 מדריך הסגנון](#ch4-5)
+
+[פרק 5 — צד השרת: מודול ההזדהות](#ch5)
+
+- [5.1 שלוש השכבות](#ch5-1)
+- [5.2 מבט-על על הקונטרולר והשירות](#ch5-2)
+- [5.3 התחברות ונעילת חשבון · POST /api/auth/login](#ch5-3)
+- [5.4 אימות Token · GET /api/auth/me](#ch5-4)
+- [5.5 שאר מנגנוני המודול](#ch5-5)
+- [5.6 החיבור לצד הלקוח](#ch5-6)
+
+[פרק 6 — צד השרת: מודול הניהול](#ch6)
+
+- [6.1 שלוש השכבות](#ch6-1)
+- [6.2 מבט-על על הקונטרולרים והשירותים](#ch6-2)
+- [6.3 שינוי סטטוס הזמנה · PATCH /api/orders/:id/status](#ch6-3)
+- [6.4 שאר מנגנוני המודול](#ch6-4)
+- [6.5 החיבור לצד הלקוח](#ch6-5)
+
+[פרק 7 — עגלה, תשלום ומחזור חיים של הזמנה](#ch7)
+
+- [7.1 עגלת קניות](#ch7-1)
+- [7.2 תשלום](#ch7-2)
+- [7.3 מחזור חיים של הזמנה](#ch7-3)
+
+[פרק 8 — אבטחה, API וביצועים](#ch8)
+
+- [8.1 שכבות האבטחה](#ch8-1)
+- [8.2 נקודות הקצה](#ch8-2)
+- [8.3 ביצועים, אמינות ו-Design Patterns](#ch8-3)
+
+[פרק 9 — תהליך הפיתוח, בדיקות והפצה](#ch9)
+
+- [9.1 תהליך הפיתוח](#ch9-1)
+- [9.2 מערך הבדיקות](#ch9-2)
+- [9.3 תהליך ההפצה](#ch9-3)
+
+[פרק 10 — סיכום ומסקנות](#ch10)
+
+- [10.1 הישגים טכניים](#ch10-1)
+- [10.2 אתגרים ומה שנלמד](#ch10-2)
+- [10.3 פיתוחים עתידיים](#ch10-3)
+- [10.4 תודות](#ch10-4)
+
+### הצהרת הסטודנט
+
+אני מצהיר כי העבודה המוגשת להלן נעשתה על ידי באופן עצמאי, על פי ידיעתי האישית, תוך שימוש בקוד, במאמרים ובמקורות אחרים על פי כללי האתיקה האקדמית ובציון מקורות מתאימים. כל הנתונים, שמות המשתמשים והסכומים המופיעים במסמך זה משמשים להדגמה לצורכי לימוד בלבד.
+
+פרטי הזיהוי האקדמי מרוכזים ב-`docs/student-qa-appendix.md`. המרת הקוד אל הספר נעשית לפי `docs/book-conversion-guide.md` והנספחים ב-`docs/appendices/`. הגרסה החיה של ספר זה נגישה ב-`GET /api/docs`.
 
 ---
 
-## פרק 2 — תיאור המערכת
+<a id="ch1"></a>
 
-### משתמשי הקצה
+## פרק 1 — מבוא ותיאור הפרויקט
 
-| תפקיד | יכולות |
+BloomStore היא חנות פרחים מקוונת מלאה (Full-Stack E-Commerce) שנבנתה כפרויקט גמר במסלול טכנאי תוכנה. המערכת מכסה את מסלול הרכישה כולו: עיון בקטלוג ציבורי, הרשמה והתחברות, עגלת קניות, בחירת כתובת משלוח, יצירת הזמנה בתשלום מדומה, ומעקב אחרי סטטוס המשלוח. מנהל החנות מנהל מלאי, מקדם הזמנות וצופה בלוח סטטיסטיקות.
+
+המערכת חיה במונורפו אחד (Nx): אפליקציית React, שרת NestJS, וספריית חוזים משותפת ב-TypeScript. שני הצדדים רצים בנפרד ומתקשרים דרך חוזה API מתועד ב-Swagger.
+
+<a id="ch1-1"></a>
+
+### 1.1 מטרות המערכת
+
+- מערכת מסחר אלקטרוני פונקציונלית מקצה לקצה, מרישום משתמש ועד אישור הזמנה.
+- ארכיטקטורת שרת-לקוח מופרדת בתוך מונורפו, עם חוזה טיפוסים אחד ב-`libs/shared-types`.
+- אכיפת כל פעולה רגישה בצד השרת, ולא רק הסתרה בצד הלקוח.
+- לוח ניהול למוצרים, להזמנות ולתמונת מצב סטטיסטית.
+- מלאי עקבי: נעילת מחיר בשורת ההזמנה, והחזרת מלאי בטרנזקציה כשמבטלים לפני משלוח.
+- זמני תגובה קצרים בקריאת העגלה, באמצעות שכבת Cache לצד MongoDB כמקור האמת.
+- שפה חזותית אחידה לפי מדריך הסגנון של החנות.
+
+<a id="ch1-2"></a>
+
+### 1.2 סקירת מצב קיים בשוק
+
+קיימים פתרונות בשלים לבניית חנות מקוונת, וכל אחד מהם סוגר צורך אחר:
+
+- **Shopify** — SaaS מהיר להקמה, אך המערכת סגורה וההתאמות מוגבלות למה שהפלטפורמה חושפת.
+- **WooCommerce** — קוד פתוח וגמיש, אך כרוך בתחזוקת WordPress ובתלות בתוספים של צד שלישי.
+- **Wix Stores** — בונה אתרים ויזואלי, שאינו מיועד להרחבה בקוד.
+- **Magento** — מערכת ארגונית עשירה, אך כבדה להקמה ולתחזוקה.
+
+לחנות פרחים קטנה הפער אינו בהיצע הכללי אלא בשקיפות של שלושה כללים עסקיים: מלאי בזמן אמת, מניעת חיוב במחיר שכבר השתנה בקטלוג, וביטול הזמנה שמחזיר את הפרחים למלאי. הפלטפורמות המוכנות מסתירות את השכבות שהפרויקט נועד להדגים: אימות, הרשאות, צילום מחיר, מכונת מצבים של הזמנה, והתאוששות מביטול.
+
+<a id="ch1-3"></a>
+
+### 1.3 חלוקת תפקידים ומבנה הספר
+
+ההגשה היא של סטודנט יחיד.
+
+| תחום אחריות | מפתח | רכיב |
+| --- | --- | --- |
+| ממשק משתמש, ניתוב, ניהול state, מדריך סגנון | אביב לייסטן | `apps/frontend` |
+| שרת, מסד נתונים, אימות, הזמנות, אבטחה | אביב לייסטן | `apps/backend` |
+| חוזה API, סכמות Zod, מכונת מצבים | אביב לייסטן | `libs/shared-types` |
+| ספר הפרויקט והתיעוד | אביב לייסטן | `docs/project-book.md` |
+
+טבלה 1 — חלוקת התפקידים
+
+הספר סוקר את המערכת כולה, ומעמיק בשלושה אזורים שנבחרו להצגה מפורטת: יסודות צד הלקוח (פרק 4), מודול ההזדהות בצד השרת (פרק 5) ומודול הניהול בצד השרת (פרק 6). שאר הפרקים מציגים את היקף המערכת, את מודל הנתונים, את תהליך ההפצה ואת מערך הבדיקות.
+
+```mermaid
+flowchart LR
+  SPA["React SPA"] --> API["NestJS Controllers"]
+  API --> SVC["Services"]
+  SVC --> DB[("MongoDB")]
+  SVC --> CACHE["Redis או זיכרון"]
+  SPA --> PAGES["GitHub Pages"]
+  API --> RENDER["Render"]
+```
+
+איור 1 — זרימת המערכת: לקוח, שרת, נתונים והפצה
+
+---
+
+<a id="ch2"></a>
+
+## פרק 2 — ארכיטקטורה ומודל הנתונים
+
+BloomStore בנויה על ארכיטקטורת שלוש שכבות: ממשק משתמש, לוגיקה עסקית ומסד נתונים. אותו עיקרון חוזר בתוך השרת. Controller מחלץ פרמטרים, מאמת קלט ב-Zod ומחזיר מעטפת `ApiResponse`. הוא אינו ניגש למסד הנתונים. Service מחזיק את כללי המלאי, ההזמנה והאבטחה. Model של Mongoose הוא שכבת ההתמדה.
+
+```mermaid
+flowchart TB
+  subgraph presentation [Presentation]
+    UI["React pages"]
+    CTRL["NestJS controllers"]
+  end
+  subgraph business [Business]
+    SVC["services"]
+  end
+  subgraph data [Data]
+    MODELS["Mongoose models"]
+  end
+  UI --> CTRL --> SVC --> MODELS
+```
+
+איור 2 — ארכיטקטורת שלוש שכבות: Presentation / Business / Data
+
+<a id="ch2-1"></a>
+
+### 2.1 טכנולוגיות
+
+| שכבה | טכנולוגיה | לשם מה |
+| --- | --- | --- |
+| Monorepo | Nx · TypeScript strict · Node 20+ | פרויקט אחד לשלושה חבילות, עם `npx nx` לבנייה ולבדיקות |
+| Frontend | React 19 + TypeScript | רכיבים לשימוש חוזר וטיפוסים משותפים עם השרת |
+| Frontend | Vite · React Router 7 | שרת פיתוח מהיר ומעבר בין דפים ללא רענון |
+| Frontend | Axios | Interceptor שמצרף JWT אוטומטית |
+| Frontend | MUI 7 · מדריך סגנון | רכיבי ממשק, טוקנים וטיפוגרפיה |
+| Frontend | Recharts | תרשים מכירות בלוח הניהול |
+| Backend | NestJS 11 על Express | מודולים, Guards ו-Swagger |
+| Backend | MongoDB + Mongoose | מסמכי הזמנה מקוננים, סכמה ואינדקסים |
+| Backend | Redis (ioredis) או מטמון בזיכרון | Cache לעגלת הקניות; MongoDB נשאר מקור האמת |
+| Backend | Zod · Helmet · CORS | ולידציה, כותרות אבטחה ומקורות מורשים |
+| Backend | bcryptjs · @nestjs/jwt | גיבוב סיסמאות והנפקת Access Token |
+| Backend | Swagger | תיעוד חי ב-`/api/swagger` |
+| נתונים | MongoDB Atlas | אשכול עם replica set, נדרש לטרנזקציות הביטול |
+| הפצה | GitHub Actions · GitHub Pages · Render | איכות קוד, אתר החנות, ו-API ב-Docker |
+
+טבלה 2 — הטכנולוגיות שנבחרו והתפקיד של כל אחת
+
+תשלום האשראי בפרויקט הוא ספק מדומה (`provider: simulated`). פרטי כרטיס אינם נשמרים בשרת. קולקציות ה-webhook קיימות לקליטת אירוע תשלום עתידי בלי לעבד אותו פעמיים.
+
+<a id="ch2-2"></a>
+
+### 2.2 מודל הנתונים
+
+הנתונים מאורגנים באחת-עשרה קולקציות: שש קולקציות ליבה עסקית וחמש קולקציות תמיכה ותשתית.
+
+| קולקציה | תפקיד | שדות מרכזיים |
+| --- | --- | --- |
+| `users` | חשבון, הרשאות ואבטחה | `email`, `passwordHash`, `fullName`, `role`, `tokenVersion`, `failedLoginAttempts`, `lockUntil` |
+| `products` | קטלוג | `name`, `description`, `category`, `price`, `stock`, `imageUrl`, `isActive`, `stockNotifyEmails` |
+| `carts` | עגלה אחת לכל משתמש (1:1) | `userId` ייחודי, `items[{productId, quantity}]` |
+| `orders` | הזמנה עם Snapshot של הרכישה | `orderNumber`, `userId`, `status`, `items[]`, `total`, `addressId` |
+| `payments` | ניסיון תשלום אחד לכל הזמנה | `orderId`, `userId`, `amount`, `status`, `provider` |
+| `addresses` | פנקס כתובות משלוח | `userId`, `fullName`, `phone`, `city`, `street`, `houseNumber`, `isDefault` |
+| `sequences` | מונה אטומי למספרי הזמנה | `name`, `value` (הערך ההתחלתי 1000; המספר המוצג הוא `BLM-n`) |
+| `auditlogs` | יומן ביקורת | `actorId`, `action`, `entity`, `entityId`, `metadata` |
+| `webhookevents` | אירוע תשלום שכבר נקלט | `eventId` ייחודי, `type`, `payload`, `status` |
+| `failedwebhooks` | אירוע שנכשל בקליטה | `eventId`, `type`, `reason`, `payload` |
+| `idempotencykeys` | מניעת הזמנה כפולה | `key`, `userId`, `orderId`, תפוגה אחרי 24 שעות |
+
+טבלה 3 — אחת-עשרה הקולקציות במסד הנתונים
+
+יחסים: משתמש אחד לרבות כתובות והזמנות, משתמש אחד לעגלה אחת, הזמנה אחת לתשלום אחד. שורות ההזמנה שומרות עותק של שם המוצר ושל המחיר. הן אינן תלויות במחיר החי בקטלוג אחרי יצירת ההזמנה.
+
+אינדקס הקטלוג הוא על `isActive`, `stock` ו-`category`. מוצר עם `isActive: false` נעלם מהקטלוג הציבורי. מוצר עם `stock === 0` נשאר גלוי, עם הרשמה להתראת מלאי, והעגלה עדיין דוחה אותו.
+
+---
+
+<a id="ch3"></a>
+
+## פרק 3 — דרישות פונקציונליות
+
+המערכת כוללת אחד-עשר מסכים בשלושה אזורים: אזור ציבורי, אזור למשתמש מחובר, ולוח ניהול.
+
+| מסך | תיאור | פונקציות מרכזיות |
+| --- | --- | --- |
+| דף הבית | קטלוג המוצרים הפעילים | שליפה מהשרת, סינון קטגוריה, גריד, מוצרים שאזלו נשארים עם ״Notify me״ |
+| דף מוצר | פרטי פריט בודד | תמונה, מחיר, מלאי, הוספה לעגלה או טופס התראת מלאי |
+| יצירת קשר | `/contact` | פרטי החנות וטופס פנייה |
+| התחברות | כניסת משתמש קיים | ולידציית שדות, שמירת Token, הודעת נעילה ב-423 |
+| הרשמה | יצירת חשבון לקוח | ולידציה, יצירת משתמש, כניסה אוטומטית |
+| עגלת קניות | פריטים לפני תשלום | שינוי כמות, הסרת פריט, מעבר לקופה |
+| קופה | כתובת ויצירת הזמנה | בחירה או יצירה של כתובת, מפתח idempotency, סטטוס `pending_payment` |
+| ההזמנות שלי | מעקב הלקוח | מספר הזמנה, מחיר נעול, סטטוס, ביטול לפני משלוח |
+| ניהול — מוצרים | קטלוג כולל לא-פעילים | הוספה, סימון אזל, החזרה למלאי, מחיקה רכה |
+| ניהול — הזמנות | מעקב מנהל | סינון לפי סטטוס וקידום לפי מכונת המצבים |
+| ניהול — סטטיסטיקות | תמונת מצב | הכנסות, הזמנות פתוחות, מלאי נמוך, צמיחת משתמשים ותרשים שבועי |
+
+טבלה 4 — אחד-עשר מסכי המערכת והפונקציות שבכל אחד
+
+דרישות לא פונקציונליות: TypeScript strict בכל הפרויקטים, מעטפת JSON אחידה `{ success, data }` או `{ success: false, error }`, ותיעוד חי של הספר ושל ה-API.
+
+---
+
+<a id="ch4"></a>
+
+## פרק 4 — צד הלקוח: יסודות הממשק
+
+פרק זה נפתח במבט על הממשק שהלקוח רואה, ואחריו מציג את מעטפת האפליקציה, את דף הקטלוג ואת כרטיסיית המוצר. מדריך הסגנון סוגר את הפרק.
+
+<a id="ch4-1"></a>
+
+### 4.1 ממשק החנות — מבט מקדים
+
+דף הבית הוא נקודת הכניסה. בראש העמוד יש אזור תמונה (`CatalogHero`) עם קריאה לפעולה ״Shop Flowers״. מתחתיו כפתורי קטגוריה (`CategoryPills`) ורשת כרטיסים. כל כרטיס כולל תמונה, שם, מחיר בשקלים ופעולה. פריט שאזל נשאר על המדף עם תגית מלאי וטופס התראת דוא״ל. פריט לא פעיל אינו מגיע מהשרת כלל.
+
+המעטפת הקבועה היא סרגל (`Header`), תוכן (`main`) ותחתית (`Footer`). אין תפריט המבורגר. כניסה לניהול יושבת בתפריט החשבון, ורק למשתמש שתפקידו `admin`.
+
+<a id="ch4-2"></a>
+
+### 4.2 App.tsx וספקי ה-state
+
+`main.tsx` מרכיב את העץ: `ThemeProvider` ו-`CssBaseline` לפי ערכת הנושא, `BrowserRouter` עם בסיס הנתיב של GitHub Pages, ואז `AuthProvider` ו-`CartProvider`. שני המצבים הגדולים — המשתמש המחובר והעגלה — יושבים ב-Context ולא בתוך `App.tsx`. כך כל דף קורא ל-`useAuth` או ל-`useCart` בלי להעביר props לאורך כל העץ.
+
+`App.tsx` אחראי על ארבעה דברים: גלילה לראש בכל ניווט, הצגת Header ו-Footer, הגדרת הנתיבים, ושערי גישה. `Private` מפנה ל-`/login` כשאין משתמש. `AdminOnly` מפנה לדף הבית כשהתפקיד אינו `admin`. השער בצד הלקוח הוא חוויית משתמש. האכיפה נשארת בשרת.
+
+`AuthProvider` בודק בעליית האפליקציה אם יש `bloomstore.token` ב-`localStorage`. אם יש, הוא קורא ל-`GET /api/auth/me`. תשובה תקינה שומרת את המשתמש. כשל מוחק את הטוקן. התחברות והרשמה שומרות את ה-Token שחזר מהשרת. התנתקות קוראת ל-`POST /api/auth/logout` ומוחקת את המפתח המקומי.
+
+`CartProvider` שולף את העגלה מ-`GET /api/cart` בכל פעם שיש משתמש מחובר. בלי משתמש העגלה המקומית מתרוקנת. הוספה, עדכון והסרה מעדכנים את ה-state לפי תשובת השרת.
+
+לקוח ה-Axios ב-`services/api.ts` מצמיד `Authorization: Bearer` לכל בקשה שיש לה טוקן, ופורש את המעטפת `{ success, data }`.
+
+<a id="ch4-3"></a>
+
+### 4.3 CatalogPage.tsx — דף הבית
+
+`CatalogPage` אחראי על שליפת המוצרים, על שמירתם ב-state, על סינון לפי קטגוריה מתוך ה-query string, ועל הצגה באמצעות `ProductCard`. בזמן טעינה מוצגים שישה שלדי כרטיס (`ProductCardSkeleton`). רשימה ריקה מציגה `EmptyState`.
+
+הקטגוריה נקראת מ-`?category=`. ערך שאינו בקבוצת הקטגוריות החוקית מתעלמים ממנו. הבקשה היא `GET /api/products` או `GET /api/products?category=`. השרת כבר מסתיר מוצרים לא פעילים וממיין פריטים במלאי לפני פריטים שאזלו. הדף אינו מסנן לבד מוצרים עם מלאי אפס, כדי שהלקוח יוכל להירשם להתראה.
+
+הוספה לעגלה בודקת קודם אם יש משתמש. אורח מועבר ל-`/login` עם כתובת החזרה. משתמש מחובר קורא ל-`add` של ה-Context.
+
+<a id="ch4-4"></a>
+
+### 4.4 ProductCard.tsx — כרטיסיית מוצר
+
+`ProductCard` מציגה מוצר אחד: תמונה, שם, מחיר, ומצב מלאי. היא מקבלת את המוצר ואת `onAddToCart`. לחיצה על התמונה או על השם מובילה ל-`/products/:id`.
+
+כש-`stock === 0` הכפתור הופך לטופס `StockNotifyForm`. כשהמלאי בין 1 ל-3 מוצגת תגית מלאי נמוך. בזמן הוספה הכפתור מציג מצב טעינה, ואחרי הצלחה אישור קצר. שגיאה מהשרת, למשל חריגה מהמלאי, מוצגת על הכרטיס.
+
+הכרטיס משתמש בטוקני העיצוב: הרמה קלה בריחוף (`translateY`) וצל ורדרד. במכשיר מגע אין אפקט ריחוף.
+
+<a id="ch4-5"></a>
+
+### 4.5 מדריך הסגנון
+
+מקור המדריך הוא `apps/frontend/STYLE_GUIDE.md`, והערכים החיים נמצאים ב-`src/theme/tokens.ts` וב-`src/theme/theme.ts`.
+
+עקרונות:
+
+1. MUI קודם: `Box`, `Stack`, `Grid`, `Paper`, `Typography`, `Button`, `TextField`, `Card`.
+2. צבע, רדיוס וטיפוגרפיה מגיעים מהטוקנים, לא מצבעים קשיחים חדשים במסכים.
+3. כל מסך עטוף ב-`PageShell`. כותרת ב-`PageHeader`. שורות רשימה ב-`SurfaceCard`.
+4. ניגודיות על רקע קרם, כותרת `h1` אחת בעמוד, וטבעת פוקוס של MUI.
+5. Tailwind נשאר רק בשאריות ישנות. מסך חדש אינו מוסיף מחלקות Tailwind.
+
+| אסימון | ערך | שימוש |
+| --- | --- | --- |
+| Dusty rose | `#c45c7a` | פעולות ראשיות, סימן המותג, בחירה |
+| Rose dark | `#a84862` | מצב לחוץ וכהה |
+| Sage | `#3d6b4f` | הדגשות, קישורים, אווטאר חשבון |
+| Cream | `#fbf6f0` | רקע העמוד |
+| Parchment | `#fffaf6` | כרטיסים וסרגל |
+| Charcoal | `#1f2933` | טקסט גוף |
+
+טבלה 5 — טוקני הצבע של BloomStore
+
+טיפוגרפיה: Fraunces לכותרות, DM Sans לגוף ולממשק. כפתור ראשי הוא `contained`, משני הוא `outlined`, ובסרגל `text`. אין אותיות גדולות אוטומטיות (`textTransform: 'none'`). שגיאות ב-`Alert`, סטטוס הזמנה ב-`StatusChip`, טעינה ב-`CircularProgress` או ב-`PageLoading`. מרווחים מועדפים: 2, 3 ו-4 ביחידות ה-theme.
+
+רדיוסים: 8, 12 ו-20 פיקסלים, וגלולה מלאה לצ׳יפים. צל הכרטיס רך ועם גוון ורוד שקוף, כדי שהחנות תישאר רגועה ולא כמו לוח בקרה כהה.
+
+---
+
+<a id="ch5"></a>
+
+## פרק 5 — צד השרת: מודול ההזדהות
+
+פרק זה מציג את מודול ההזדהות: תחילה את שלוש השכבות, ואחר כך שתי נקודות קצה במלואן.
+
+<a id="ch5-1"></a>
+
+### 5.1 שלוש השכבות
+
+ב-NestJS אין קובץ ראוטר נפרד. הנתיבים וה-Guards יושבים על הקונטרולר. השירות אינו מכיר את אובייקט ה-HTTP.
+
+| שכבה | קובץ | אחריות |
+| --- | --- | --- |
+| Controller | `auth/auth.controller.ts` | ארבע נקודות קצה: register, login, logout, me |
+| Service | `auth/auth.service.ts` | הרשמה, התחברות, נעילה, הנפקת JWT |
+| Model | `models/user.schema.ts` | סכמת המשתמש |
+| Guard | `auth/jwt.strategy.ts` | פענוח ה-Token מתוך כותרת Authorization |
+| Guard | `auth/token-version.guard.ts` | השוואת `tokenVersion` מול המסד |
+| Rate limit | `main.ts` | עד 20 ניסיונות לדקה מאותה כתובת IP על login, register והתראת מלאי |
+
+טבלה 6 — חלוקת האחריות במודול ההזדהות
+
+נתיבי `register` ו-`login` ציבוריים. נתיבי `logout` ו-`me` דורשים `AuthGuard('jwt')` ואחריו `TokenVersionGuard`.
+
+<a id="ch5-2"></a>
+
+### 5.2 מבט-על על הקונטרולר והשירות
+
+`AuthController` חושף ארבע פעולות. כל פעולה קצרה: פירוק Zod במקום שנדרש, קריאה לשירות, והחזרה דרך `ok()`. `AuthService` מחזיק את `register`, `login`, `logout`, `me` ואת `issue` הפרטי שחותם את ה-Token.
+
+ההפרדה מדידה. הקונטרולר מתרגם בין HTTP ללוגיקה. ספירת כישלונות, נעילה וחתימת הטוקן יושבות בשירות.
+
+<a id="ch5-3"></a>
+
+### 5.3 התחברות ונעילת חשבון · POST /api/auth/login
+
+הקונטרולר מאמת את הגוף מול `loginSchema` ומעביר אימייל וסיסמה לשירות.
+
+בשירות ארבעה כללים:
+
+1. המשתמש נשלף לפי אימייל באותיות קטנות. אימייל שאינו קיים וסיסמה שגויה מחזירים אותה שגיאה: `INVALID_CREDENTIALS` עם HTTP 401.
+2. אם `lockUntil` עדיין בעתיד, הבקשה נדחית לפני השוואת הסיסמה, עם HTTP 423 והקוד `ACCOUNT_LOCKED`.
+3. כל כישלון מגדיל את `failedLoginAttempts`. בכישלון החמישי (`MAX_FAILED_LOGINS`) נקבע `lockUntil` לעוד 15 דקות, נרשמת פעולת `user.lockout` ביומן, ומוחזר 423.
+4. התחברות מוצלחת מאפסת את המונה ואת הנעילה, רושמת `user.login`, ומנפיקה JWT.
+
+הסיסמה נשמרת רק כ-hash של bcrypt בעשרה סבבי salt. ההשוואה היא `bcrypt.compare` מול ה-hash.
+
+הרשמה של כתובת קיימת מחזירה 409 עם `EMAIL_TAKEN`. תשובת 423 על חשבון נעול מעידה שהחשבון קיים. זו הגנה חלקית ומודעת: הסתרה מלאה הייתה דורשת תשובה אחידה גם בהרשמה, במחיר בהירות למשתמש שנרשם.
+
+<a id="ch5-4"></a>
+
+### 5.4 אימות Token · GET /api/auth/me
+
+זו נקודת הקצה שה-`useEffect` של `AuthProvider` קורא לה בכל עליית אפליקציה, אם נשמר Token.
+
+ה-JWT נחתם עם `sub`, `email`, `role` ו-`tokenVersion`. תוקף ברירת המחדל הוא שמונה שעות (`JWT_EXPIRES_IN`). `TokenVersionGuard` טוען את המשתמש מהמסד ומשווה את הגרסה החתומה לגרסה השמורה. אי-התאמה מחזירה 401 עם `TOKEN_REVOKED`.
+
+התנתקות מגדילה את `tokenVersion` באחד. כל Token שכבר הונפק נפסל בלי רשימה שחורה. שינוי הסיסמה אינו ממומש כמסלול נפרד. פסילת הסשן הקיים נעשית באותו שדה.
+
+<a id="ch5-5"></a>
+
+### 5.5 שאר מנגנוני המודול
+
+- **גיבוב הסיסמה.** `bcrypt.hash` בעשרה סבבים בזמן ההרשמה. אין שחזור של הסיסמה מה-hash, והיא אינה נשמרת כטקסט גלוי.
+- **שכבת ה-Guard.** כל נתיב מוגן עובר JWT ואז בדיקת גרסה. הקונטרולר מקבל בקשה שכבר אומתה, עם `req.user`.
+- **התנתקות.** `POST /api/auth/logout` מגדיל את `tokenVersion` ורושם `user.logout`.
+- **מעטפת שגיאה.** `ApiExceptionFilter` הופך חריגות Nest ו-Zod ל-`{ success: false, error: { code, message } }`.
+- **יומן.** הרשמה, התחברות, נעילה והתנתקות נכתבות ל-`auditlogs`. כישלון ביומן אינו חלק ממסלול ההתחברות עצמו מעבר לקריאות הקיימות אחרי פעולה שהצליחה.
+
+<a id="ch5-6"></a>
+
+### 5.6 החיבור לצד הלקוח
+
+`LoginPage` ו-`RegisterPage` שולחים את הטופס לנקודות הקצה, ו-`AuthProvider` שומר את ה-Token ומעדכן את המשתמש. מסך ההתחברות מציג את הודעת הנעילה כשהשרת מחזיר 423. אחרי הצלחה המשתמש חוזר לכתובת שממנה הופנה, או לדף הבית.
+
+---
+
+<a id="ch6"></a>
+
+## פרק 6 — צד השרת: מודול הניהול
+
+אין בשרת מודול בשם `admin` שמכיל את כל פעולות הניהול. ההגנה משותפת: `AuthGuard`, `TokenVersionGuard` ו-`AdminGuard`. הפעולות עצמן יושבות על מוצרים, על הזמנות ועל אנליטיקה. בצד הלקוח הן מתכנסות למסך אחד.
+
+<a id="ch6-1"></a>
+
+### 6.1 שלוש השכבות
+
+`AdminGuard` בודק `req.user.role === 'admin'` ומחזיר 403 עם `FORBIDDEN` לכל תפקיד אחר. הוא רץ אחרי שה-Token אומת, כי הוא תלוי ב-payload שכבר הוצמד לבקשה.
+
+| שכבה | קובץ | אחריות |
+| --- | --- | --- |
+| Controller | `products/products.controller.ts` | רשימת מנהל, יצירה, עדכון, מחיקה רכה |
+| Controller | `orders/orders.controller.ts` | רשימת הזמנות, שינוי סטטוס, ביטול |
+| Controller | `analytics/analytics.controller.ts` | `GET /api/admin/stats` |
+| Service | `products.service.ts` | קטלוג, Soft Delete, התראת מלאי |
+| Service | `orders.service.ts` | מכונת מצבים ו-restock |
+| Service | `analytics.service.ts` | שש שאילתות במקביל |
+| Guard | `auth/admin.guard.ts` | דחיית משתמש שאינו מנהל |
+| Audit | `audit/audit.service.ts` | רישום פעולות יצירה, עדכון, מחיקה ושינוי סטטוס |
+
+טבלה 7 — חלוקת האחריות במודול הניהול
+
+<a id="ch6-2"></a>
+
+### 6.2 מבט-על על הקונטרולרים והשירותים
+
+כל פעולת מנהל בקונטרולר היא קריאה אחת לשירות והחזרת `ok()`. היצירה והעדכון של מוצר מאמתים `productInputSchema` בתוך השירות. שינוי סטטוס מאמת `orderStatusUpdateSchema` ואז את `canTransition`.
+
+לוח הסטטיסטיקות נשען על נקודת קצה אחת. `AnalyticsService.dashboard` מריץ ב-`Promise.all` חישוב הכנסות, ספירת הזמנות פתוחות, ספירת הזמנות של היום, ספירת מוצרים במלאי נמוך (עד 5 יחידות ופעילים), ספירת משתמשים חדשים מששת הימים האחרונים, ואגרגציית מכירות לפי יום. השאילתות אינן תלויות זו בזו, ולכן זמן התגובה נקבע לפי האיטית שבהן.
+
+<a id="ch6-3"></a>
+
+### 6.3 שינוי סטטוס הזמנה · PATCH /api/orders/:id/status
+
+זו הפעולה הרגישה בלוח הניהול, כי היא מזיזה מלאי וכסף מדומה. הקונטרולר מוגן ב-`AdminGuard`, מחלץ את מזהה ההזמנה ואת גוף הבקשה, וקורא ל-`OrdersService.updateStatus`.
+
+בשירות שתי בדיקות לפני כל כתיבה. הראשונה מוודאת שהסטטוס המבוקש הוא ערך מתוך `ORDER_STATUSES`. השנייה קוראת ל-`canTransition`. מעבר שאינו במטריצה נדחה עם `ILLEGAL_TRANSITION`.
+
+המעברים החוקיים:
+
+| מ | אל |
 | --- | --- |
-| אורח | קטלוג, דף מוצר, יצירת קשר (`/contact`), והרשמה להתראת מלאי כשפריט אזל |
-| לקוח (`customer`) | הרשמה, התחברות, עגלה, כתובות, הזמנה, ביטול לפני `shipped` |
-| מנהל (`admin`) | כל יכולות הלקוח + CRUD מוצרים (מחיקה רכה), סינון הזמנות, שינוי סטטוס, סטטיסטיקות |
+| `pending_payment` | `confirmed`, `cancelled` |
+| `confirmed` | `processing`, `cancelled` |
+| `processing` | `shipped`, `cancelled` |
+| `shipped` | `delivered` |
+| `delivered` | אין |
+| `cancelled` | אין |
 
-### מודולים פונקציונליים
+טבלה 8 — מטריצת מעברי ההזמנה
 
-1. קטלוג ציבורי — רשת מוצרים עם קטגוריה, מחיר, מלאי ותמונה. סינון `isActive: true` (פריטים עם `stock === 0` נשארים גלויים עם המתנה למלאי).
-2. אבטחה — JWT עם `tokenVersion`, נעילת חשבון אחרי 5 כשלונות (`ACCOUNT_LOCKED`, HTTP 423), Helmet, CORS, rate limit, סניטציית NoSQL.
-3. עגלה — Write-Through ל-MongoDB + Redis (או מטמון בזיכרון).
-4. הזמנות — מכונת מצבים + צילום מחיר בשורות ההזמנה.
-5. ניהול ואנליטיקה — `Promise.all` לאגרגציות מקבילות ותרשימים בממשק המנהל.
+מעבר ל-`confirmed` מסמן את התשלום כ-`captured`. מעבר ל-`cancelled` מפעיל החזרת מלאי בטרנזקציה ומסמן את התשלום כ-`refunded`. אחרי משלוח אי אפשר לבטל דרך המטריצה, והשירות חוסם restock גם אם הסטטוס כבר `shipped`, `delivered` או `cancelled`.
 
-### טכנולוגיות
+```mermaid
+stateDiagram-v2
+  [*] --> pending_payment
+  pending_payment --> confirmed
+  pending_payment --> cancelled
+  confirmed --> processing
+  confirmed --> cancelled
+  processing --> shipped
+  processing --> cancelled
+  shipped --> delivered
+```
 
-- Frontend: React 19, Vite, React Router 7, Axios, MUI + Tailwind (`apps/frontend`)
-- Backend: NestJS (Express), Mongoose, Zod, Helmet (`apps/backend`)
-- Shared: DTOs וסכמות Zod (`libs/shared-types`)
-- תיעוד: Markdown עברי ב-`docs/project-book.md`
+איור 3 — מפת סטטוסי ההזמנה
+
+<a id="ch6-4"></a>
+
+### 6.4 שאר מנגנוני המודול
+
+- **בדיקת ההרשאה.** הקישור לניהול מוצג רק למנהל. פנייה ישירה ל-`/api/products/admin` או ל-`/api/orders/admin` עם Token של לקוח נענית ב-403.
+- **Soft Delete.** `DELETE /api/products/:id` אינו מוחק את המסמך. הוא קובע `isActive: false`. הזמנות ישנות שומרות את שם המוצר ואת מחירו ב-snapshot, והמוצר נעלם מהקטלוג הציבורי.
+- **החזרה למלאי.** עדכון שמעלה `stock` מאפס ליחידה חיובית שולח התראת דוא״ל לכל כתובת ב-`stockNotifyEmails` ומרוקן את הרשימה. בלי `MAIL_WEBHOOK_URL` ההודעה נכתבת ללוג השרת.
+- **Audit Log.** יצירת מוצר, עדכון, מחיקה רכה ושינוי סטטוס נרשמים עם מזהה המנהל והמשאב.
+- **סינון הזמנות.** `GET /api/orders/admin?status=` מחזיר את כל ההזמנות או רק סטטוס אחד.
+
+<a id="ch6-5"></a>
+
+### 6.5 החיבור לצד הלקוח
+
+`AdminPage` מחזיקה שלושה טאבים ב-state מקומי: Products, Orders, Statistics. כל טאב קורא לנקודת הקצה המתאימה. טופס הוספת המוצר רץ מול אותה סכמת Zod שבשרת, כדי להציג שגיאות שדה לפני השליחה. תרשים העמודות של Recharts מצייר את `salesByDay`.
 
 ---
 
-## פרק 3 — ניתוח המערכת
+<a id="ch7"></a>
 
-### מקרי שימוש עיקריים
+## פרק 7 — עגלה, תשלום ומחזור חיים של הזמנה
 
-**UC-01 צפייה בקטלוג:** אורח פותח `/`. המערכת מחזירה מוצרים פעילים, כולל פריטים שאזלו, ומסדרת במלאי לפני אזל.
+<a id="ch7-1"></a>
 
-**UC-01b התראת מלאי:** אורח מזין אימייל בפריט עם `stock === 0`. הכתובת נשמרת ב-`products.stockNotifyEmails`. כשהמלאי חוזר (עדכון מנהל או restock בביטול הזמנה) נשלח מייל והרשימה מתרוקנת.
+### 7.1 עגלת קניות
 
-**UC-02 התחברות:** הלקוח שולח אימייל וסיסמה. אחרי 5 כשלונות מוחזר 423. הצלחה מחזירה JWT הכולל `tokenVersion`.
+העגלה נשמרת במסד הנתונים, לא בדפדפן. סגירת הדפדפן או מעבר מכשיר אינם מוחקים אותה, כל עוד המשתמש מחובר לאותו חשבון.
 
-**UC-03 הוספה לעגלה:** הלקוח בוחר כמות. השירות בודק מלאי, כותב ל-MongoDB ומעדכן מטמון.
+- **Write-Through.** כל שינוי נשמר קודם ב-MongoDB, ואז נכתב ל-Cache. המפתח הוא `cart:{userId}`. ברירת התפוגה היא 300 שניות. אם `REDIS_URL` חסר, או אם Redis נכשל, נשמר עותק בזיכרון התהליך. נפילת ה-Cache מאטה קריאה חוזרת ואינה מאבדת את העגלה.
+- **בדיקת מלאי בהוספה.** המוצר חייב להיות פעיל ובעל `stock > 0`, והכמות אינה יכולה לעבור את המלאי. אחרת חוזר `OUT_OF_STOCK` או `NOT_FOUND`.
+- **יחס 1:1.** אינדקס ייחודי על `userId`.
+- **מחיר לתצוגה.** בעת טעינת העגלה השירות מצרף שם, תמונה ומחיר עדכני מהקטלוג. נעילת המחיר מתרחשת רק ביצירת ההזמנה.
 
-**UC-04 תשלום והזמנה:** הלקוח בוחר כתובת ושולח `idempotencyKey`. נוצרת הזמנה `pending_payment` עם snapshot מחירים, יורד מלאי, העגלה מתרוקנת.
+<a id="ch7-2"></a>
 
-**UC-05 ביטול:** לפני `shipped` המלאי מוחזר בטרנזקציה והסטטוס `cancelled`.
+### 7.2 תשלום
 
-**UC-06 ניהול משלוח:** מנהל מסנן לפי סטטוס ומקדמים לפי מטריצת המעברים ב-`ORDER_TRANSITIONS`.
+הקופה (`CheckoutPage`) עוברת משלושה שלבים בממשק אחד: סיכום העגלה, בחירה או יצירה של כתובת, ושליחת `POST /api/orders/checkout` עם `addressId` ו-`idempotencyKey`. אין דף סליקה חיצוני. הספק במסמך התשלום הוא `simulated`, והסכום הוא סכום שורות ה-snapshot.
 
-**UC-07 דשבורד:** מנהל רואה הכנסות, הזמנות פתוחות, מכירות יומיות, התראות מלאי נמוך וצמיחת משתמשים.
+יצירת ההזמנה רצה בטרנזקציית MongoDB:
 
-### דרישות לא פונקציונליות
+1. אם אותו מפתח idempotency כבר מצביע על הזמנה של אותו משתמש, מוחזרת ההזמנה הקיימת ולא נוצרת שנייה.
+2. הכתובת חייבת להיות בבעלות המשתמש.
+3. לכל שורה מתבצע `findOneAndUpdate` שמצליח רק אם המוצר פעיל והמלאי מספיק, ומפחית את המלאי באותה פעולה.
+4. נוצרת הזמנה בסטטוס `pending_payment` עם מספר `BLM-n`, שורות snapshot וסכום.
+5. נוצר תשלום `pending` על אותו סכום.
+6. העגלה במסד מתרוקנת, ואז גם עותק ה-Cache.
 
-- TypeScript strict בכל הפרויקטים
-- מעטפת JSON אחידה `{ success, data }` / `{ success: false, error }`
-- זמן תגובה סביר לקטלוג (אינדקס על `isActive`, `stock`, `category`)
-- תיעוד חי ב-`GET /api/docs`
+כישלון באמצע הטרנזקציה מחזיר את המלאי ואת העגלה לאחור. לחיצה כפולה על יצירת ההזמנה נעצרת במפתח ה-idempotency, שנשמר 24 שעות.
+
+קליטת webhook ב-`POST /api/webhooks/payments` שומרת אירוע לפי `eventId`. אירוע שכבר נראה מוחזר בלי כתיבה שנייה. כשל בשמירה נרשם ב-`failedwebhooks`. המסלול הזה אינו מאשר הזמנה ואינו מפחית מלאי. אישור התשלום המדומה הוא מעבר המנהל ל-`confirmed`.
+
+<a id="ch7-3"></a>
+
+### 7.3 מחזור חיים של הזמנה
+
+סטטוס ההזמנה הוא enum בן שישה ערכים, והמעברים הם אלו שבטבלה 8. מספר ההזמנה מגיע ממונה אטומי בקולקציית `sequences`.
+
+פריטי ההזמנה נשמרים כ-snapshot: `productId`, `name`, `imageUrl`, `unitPrice`, `quantity`. שינוי מחיר בקטלוג אחרי הקופה אינו משנה הזמנה שכבר נוצרה.
+
+ביטול אפשרי מ-`pending_payment`, מ-`confirmed` ומ-`processing`. הלקוח קורא ל-`POST /api/orders/:id/cancel`. המנהל יכול גם לבטל דרך שינוי הסטטוס. המלאי כבר ירד בקופה, ולכן הביטול מחזיר לכל שורה את הכמות שנשמרה ב-snapshot, בתוך טרנזקציה, ומסמן את התשלום כ-`refunded`. אם מוצר היה באפס מלאי לפני ההחזרה, נשלחת התראת חזרה למלאי.
+
+מ-`shipped` המעבר היחיד הוא אל `delivered`. אין החזרת מלאי אחרי יציאה למשלוח.
 
 ---
 
-## פרק 4 — עיצוב המערכת
+<a id="ch8"></a>
 
-### שלוש שכבות (Backend)
+## פרק 8 — אבטחה, API וביצועים
 
-1. **Presentation** — `*controller.ts`: חילוץ פרמטרים, Zod parse, החזרת `ok()` / שגיאות HTTP. אין לוגיקה עסקית.
-2. **Business** — `*service.ts`: מלאי, מכונת מצבים, נעילת חשבון, כתיבת מטמון, ביקורת.
-3. **Data** — `models/*.schema.ts`: 11 אוספי MongoDB.
+<a id="ch8-1"></a>
 
-### מודול Frontend
+### 8.1 שכבות האבטחה
 
-דפים תחת `apps/frontend/src/pages`, הקשרים Auth/Cart, לקוח Axios עם Bearer token.
+כל בקשה עוברת שרשרת בדיקות בשרת. מנגנוני ההזדהות והניהול מפורטים בפרקים 5 ו-6. הטבלה מסכמת את התמונה המלאה.
 
-### דיאגרמת רכיבים (לוגית)
-
-```
-React SPA  -->  NestJS Controllers  -->  Services  -->  Mongoose Models
-                     |                      |
-                     +--> GET /api/docs     +--> Redis/Memory cache
-```
-
-### דפוסי עיצוב (מטריצה)
-
-| דפוס | מיקום | תכלית |
+| שכבה | כלי | מפני מה היא מגנה |
 | --- | --- | --- |
-| Envelope | `common/http.ts` | תשובות אחידות |
-| Price Snapshot | `orders.service.ts` | נעילת מחיר בשורת הזמנה |
-| Write-Through Cache | `carts.service.ts` + `cache.service.ts` | Mongo מקור אמת |
+| כותרות HTTP | Helmet | Clickjacking, MIME sniffing, וחשיפת מידע על השרת. מדיניות CSP מוגדרת ב-`main.ts`, ו-`crossOriginResourcePolicy` הוא `cross-origin` כדי ש-GitHub Pages יוכל לקרוא ל-API |
+| מקורות מורשים | CORS | בקשות מדומיינים שאינם ב-`CORS_ORIGINS`. תמיד מותרים גם `http://localhost:3000` ו-`https://avivedri3.github.io` |
+| רשת פרטית | `Access-Control-Allow-Private-Network` | חסימת Chrome כשאתר ציבורי קורא ל-API על המחשב המקומי |
+| הגבלת קצב | מונה בזיכרון ב-`main.ts` | יותר מ-20 בקשות לדקה מאותו IP על login, register והתראת מלאי. התשובה היא 429 עם `RATE_LIMITED` |
+| אימות זהות | JWT + `tokenVersion` | גישה ללא הזדהות, ושימוש ב-Token שבוטל |
+| הרשאות | `AdminGuard` | פעולות ניהול על ידי לקוח |
+| ולידציה | Zod ב-`libs/shared-types` | קלט לא תקין לפני הלוגיקה |
+| הגנת שאילתה | `MongoSanitizeMiddleware` | מפתחות שמתחילים ב-`$` או שמכילים `.` בגוף ובפרמטרים |
+| מניעת כפילות | `idempotencykeys` | יצירת הזמנה כפולה |
+| סיסמאות | bcrypt, 10 סבבים | חשיפת סיסמאות במקרה של דליפת המסד |
+| מעקב | `auditlogs` | פעולות הרשמה, התחברות, ניהול מוצרים ושינוי סטטוס בלי תיעוד |
+| סודות | בדיקה בעלייה | התהליך נעצר אם חסרים `JWT_SECRET` או `MONGODB_URI` |
+
+טבלה 9 — שכבות האבטחה והאיום שכל אחת חוסמת
+
+```mermaid
+flowchart LR
+  CLIENT["דפדפן"] --> HELMET["Helmet + CORS"]
+  HELMET --> RATE["Rate limit"]
+  RATE --> SAN["Mongo sanitize"]
+  SAN --> CTRL["Controller + Zod"]
+  CTRL --> GUARD["JWT + tokenVersion + Admin"]
+  GUARD --> SVC["Service"]
+```
+
+איור 4 — מסלול בקשה מהלקוח עד השירות
+
+<a id="ch8-2"></a>
+
+### 8.2 נקודות הקצה
+
+הבסיס המקומי הוא `http://localhost:3030/api`. הממשק המתועד הוא Swagger ב-`/api/swagger`.
+
+| נתיב | פועל | הגנה | תיאור |
+| --- | --- | --- | --- |
+| `/api/auth/register` | POST | Rate limit | יצירת לקוח והנפקת Token |
+| `/api/auth/login` | POST | Rate limit | התחברות. כישלון חוזר נועל חשבון |
+| `/api/auth/logout` | POST | JWT | הגדלת `tokenVersion` |
+| `/api/auth/me` | GET | JWT | המשתמש המחובר, אחרי בדיקת גרסה |
+| `/api/products` · `/:id` | GET | ציבורי | קטלוג ופרטי מוצר, כולל אזל מהמלאי |
+| `/api/products/:id/stock-alerts` | POST | Rate limit | הרשמה להתראת חזרה למלאי |
+| `/api/products/admin` | GET | JWT + admin | כל המוצרים, כולל לא פעילים |
+| `/api/products` · `/:id` | POST / PATCH / DELETE | JWT + admin | יצירה, עדכון, מחיקה רכה |
+| `/api/cart` | GET | JWT | שליפת עגלה |
+| `/api/cart/items` | PUT | JWT | הוספה או עדכון כמות |
+| `/api/cart/items/:productId` | DELETE | JWT | הסרת פריט |
+| `/api/addresses` | GET / POST | JWT | פנקס כתובות |
+| `/api/orders/checkout` | POST | JWT + Idempotency | יצירת הזמנה מהעגלה |
+| `/api/orders/mine` · `/:id` | GET | JWT | רשימת הלקוח ופרטי הזמנה |
+| `/api/orders/:id/cancel` | POST | JWT | ביטול והחזרת מלאי |
+| `/api/orders/admin` | GET | JWT + admin | כל ההזמנות, עם `?status=` |
+| `/api/orders/:id/status` | PATCH | JWT + admin | מעבר סטטוס חוקי |
+| `/api/admin/stats` | GET | JWT + admin | נתוני לוח הבקרה |
+| `/api/webhooks/payments` | POST | מזהה אירוע | קליטה אידמפוטנטית. אינה מאשרת תשלום |
+| `/api/health` | GET | ציבורי | בדיקת חיות |
+| `/api/docs` · `/api/docs/readme` | GET | ציבורי | ספר הפרויקט ומדריך ה-API |
+
+טבלה 10 — נקודות הקצה ורמת ההגנה של כל אחת
+
+<a id="ch8-3"></a>
+
+### 8.3 ביצועים, אמינות ו-Design Patterns
+
+- **מקור אמת יחיד לעגלה.** MongoDB נשאר גם כש-Redis כבוי.
+- **שאילתות דשבורד במקביל.** `Promise.all` במקום שרשרת שמחברת זמני תגובה.
+- **אינדקס קטלוג.** `isActive`, `stock`, `category`.
+- **טרנזקציה.** קופה וביטול רצים על replica set. בלי זה אי אפשר להחזיר מלאי וסטטוס יחד.
+- **Idempotency.** מפתח הקופה נשמר 24 שעות ומונע הזמנה כפולה ברשת לא יציבה.
+
+| Pattern | היכן במערכת | לאיזה צורך |
+| --- | --- | --- |
+| Layered Architecture | Controller ← Service ← Model | בדיקת הלוגיקה בלי HTTP |
+| Envelope | `common/http.ts` | תשובות אחידות ללקוח |
+| Price Snapshot | `orders.service.ts` | נעילת מחיר ושם בשורת ההזמנה |
+| Write-Through Cache | `carts.service.ts` + `cache.service.ts` | קריאה מהירה בלי לוותר על המסד |
 | State Machine | `canTransition` ב-shared-types | מעברי סטטוס חוקיים בלבד |
-| Token Versioning | `User.tokenVersion` + `TokenVersionGuard` | ביטול JWT בהתנתקות |
-| Account Lockout | `AuthService.login` | 5 כשלונות → 423 |
+| Token Versioning | `User.tokenVersion` + `TokenVersionGuard` | פסילת JWT בהתנתקות |
+| Account Lockout | `AuthService.login` | חמישה כישלונות, ואז 423 ל-15 דקות |
 | Idempotency | `idempotencykeys` | מניעת הזמנה כפולה |
-| Soft Delete | `Product.isActive` | הסתרה מהקטלוג הציבורי |
+| Soft Delete | `Product.isActive` | הסתרה מהקטלוג בלי לשבור היסטוריה |
+| Middleware Chain | Helmet, CORS, rate limit, sanitize | שכבות אבטחה בסדר קבוע |
+
+טבלה 11 — דפוסי העיצוב ומקום היישום
 
 ---
 
-## פרק 5 — מסד הנתונים
+<a id="ch9"></a>
 
-אחת-עשרה קולקציות:
+## פרק 9 — תהליך הפיתוח, בדיקות והפצה
 
-| קולקציה | מודל | שדות עיקריים |
-| --- | --- | --- |
-| `users` | User | email, passwordHash, role, tokenVersion, failedLoginAttempts, lockUntil |
-| `products` | Product | name, category, price, stock, imageUrl, isActive, stockNotifyEmails |
-| `carts` | Cart | userId ייחודי, items[{productId, quantity}] |
-| `orders` | Order | orderNumber, status, items[snapshot], total, addressId |
-| `payments` | Payment | orderId, amount, status, provider |
-| `addresses` | Address | userId, city, street, phone, isDefault |
-| `sequences` | Sequence | name, value (מספרי הזמנה BLM-n) |
-| `auditlogs` | AuditLog | actorId, action, entity, metadata |
-| `webhookevents` | WebhookEvent | eventId ייחודי, type, payload |
-| `failedwebhooks` | FailedWebhook | eventId, reason, retryCount |
-| `idempotencykeys` | IdempotencyKey | key, userId, orderId, TTL 24ש |
+<a id="ch9-1"></a>
 
-יחסים: User 1—N Address/Order; User 1—1 Cart; Order 1—1 Payment; Order N—snapshot של Product (לא FK חי בזמן אמת — זה במכוון).
+### 9.1 תהליך הפיתוח
 
----
+שלושת הפרויקטים חיים בריפו אחד. החוזה הוגדר קודם ב-`libs/shared-types`: סכמות Zod, סטטוסים, ומטריצת המעברים. השרת והלקוח מייבאים את אותם טיפוסים, ו-Swagger משקף את הנתיבים.
 
-## פרק 6 — מימוש
+פקודות העבודה, תמיד דרך Nx המקומי:
 
-### API עיקרי
+- `npm run dev` — שרת על פורט 3030 וחנות על פורט 3000.
+- `npx nx run-many` ל-build, lint, test ו-typecheck של frontend, backend ו-shared-types.
 
-| מתודה | נתיב | תיאור |
-| --- | --- | --- |
-| GET | `/api/health` | בדיקת חיות |
-| GET | `/api/docs` | ספר הפרויקט |
-| POST | `/api/auth/register` `/login` `/logout` | אימות |
-| GET | `/api/products` | קטלוג ציבורי (כולל אזל מהמלאי) |
-| POST | `/api/products/:id/stock-alerts` | הרשמה להתראת חזרה למלאי |
-| GET/POST/PATCH/DELETE | `/api/products` | ניהול (admin); restock שולח מיילי המתנה |
-| GET/PUT/DELETE | `/api/cart` | עגלה |
-| GET/POST | `/api/addresses` | כתובות |
-| POST | `/api/orders/checkout` | יצירת הזמנה |
-| GET | `/api/orders/mine` `/admin` | רשימות |
-| PATCH | `/api/orders/:id/status` | מעבר מצב |
-| GET | `/api/admin/stats` | דשבורד |
-
-### אלגוריתם ביטול + Restock
-
-אם `canTransition(current, cancelled)` והסטטוס אינו `shipped`/`delivered`: טרנזקציית MongoDB מגדילה `stock` לכל שורת snapshot, מעדכנת הזמנה ל-`cancelled` ותשלום ל-`refunded`.
-
-### אבטחה ב-`main.ts`
-
-Helmet, CORS לפי `CORS_ORIGINS`, מגבלת קצב על `/auth/login` ו-`/auth/register`, ו-`MongoSanitizeMiddleware` שמסיר מפתחות `$` ו-`.` מגוף הבקשה.
-
----
-
-## פרק 7 — ממשק משתמש
-
-- **קטלוג:** כרטיסי מוצר, סינון קטגוריה, הוספה לעגלה, תגית Out of stock והרשמה להתראת מייל.
-- **יצירת קשר:** קישור Contact us בסרגל הניווט לדף `/contact` עם פרטי החנות וטופס פנייה.
-- **התחברות/הרשמה:** טופס MUI; הודעת נעילה אם 423.
-- **עגלה:** שינוי כמות ומחיקה.
-- **Checkout:** בחירת/יצירת כתובת + מפתח idempotency.
-- **הזמנות:** סטטוס, מחיר נעול, ביטול.
-- **Admin:** לשוניות Products / Orders / Statistics (Recharts).
-
-עיצוב: צבע ורד `#c45c7a`, רקע קרם, Tailwind לעזרת פריסה ו-MUI לרכיבים.
-
----
-
-## פרק 8 — תוכנית בדיקות (STP)
-
-### יחידה
-
-- `libs/shared-types/src/index.spec.ts` — מעברי מכונת מצבים.
-- `apps/backend/src/common/http.spec.ts` — מעטפת JSON ומדיניות נעילה.
-- `apps/frontend/src/components/Header.test.tsx` — מותג וניווט קטלוג.
-
-### אינטגרציה / E2E (תרחישים)
-
-1. אורח רואה Sunset Bouquet בקטלוג כ-Out of stock, נרשם להתראת מייל, ואינו יכול להוסיף לעגלה.
-2. לקוח מתחבר, מוסיף מוצר, מזין כתובת, checkout, רואה `pending_payment`.
-3. מנהל מאשר → processing → shipped → delivered.
-4. ביטול מ-`confirmed` מחזיר מלאי.
-5. חמש התחברויות שגויות → 423 ACCOUNT_LOCKED.
-6. Logout מגדיל `tokenVersion`; בקשת `/auth/me` עם הטוקן הישן נכשלת.
-
-CI (`.github/workflows/ci.yml`): lint, typecheck, test, build, npm audit — לפי מבנה iAgent.
-
----
-
-## פרק 9 — הדרכה למשתמש
-
-### התקנה מקומית
-
-```bash
-cp apps/backend/.env.example apps/backend/.env
-# MONGODB_URI + JWT_SECRET
-npm install
-npm run dev
-```
-
-- חנות: http://localhost:3000  
-- API: http://localhost:3030/api  
-- ספר פרויקט: http://localhost:3030/api/docs  
-
-### משתמשי הדגמה (נוצרים ב-seed אם המסד ריק)
+משתמשי הדגמה נוצרים ב-seed כשהמסד ריק:
 
 | תפקיד | אימייל | סיסמה |
 | --- | --- | --- |
-| מנהל | admin@bloomstore.com | Admin123! |
-| לקוח | customer@bloomstore.com | Customer123! |
+| מנהל | `admin@bloomstore.com` | `Admin123!` |
+| לקוח | `customer@bloomstore.com` | `Customer123!` |
 
-### פריסה
+טבלה 12 — משתמשי הדגמה
 
-- Frontend + HTML של הספר: GitHub Pages (`deploy-gh-pages.yml`, מקור: GitHub Actions) — https://avivedri3.github.io/bloomstore/
-- Backend: Render Blueprint (`render.yaml`, ענף `main`, `autoDeployTrigger: commit`). Docker: `apps/backend/Dockerfile`, context שורש הריפו. `deploy-backend.yml` מאמת את בניית Nx ומפעיל Deploy Hook רק אם הסוד `RENDER_DEPLOY_HOOK` קיים. פירוט ב-`RENDER_DEPLOYMENT.md`
+<a id="ch9-2"></a>
+
+### 9.2 מערך הבדיקות
+
+בדיקות היחידה שרצות ב-CI מכסות את מכונת המצבים (`libs/shared-types`), את מעטפת ה-HTTP ואת מדיניות הנעילה (`apps/backend/src/common/http.spec.ts`), ואת רכיבי הממשק `Header`, `ProductCard`, `CategoryPills` ו-`CatalogHero`.
+
+תרחישי הקבלה שלהלן הם מערך הבדיקה הידני של המערכת. העמודה האחרונה מציינת איפה הכלל מעוגן בקוד, ולא תוצאה של הרצה שנרשמה מחוץ ל-CI.
+
+| # | תרחיש | צעדים | תוצאה מצופה | כיסוי |
+| --- | --- | --- | --- | --- |
+| 1 | הרשמה תקינה | שם, אימייל וסיסמה באורך 8 לפחות | נוצר לקוח, מונפק Token, המשתמש מחובר | `AuthService.register` |
+| 2 | נעילת חשבון | חמישה ניסיונות עם סיסמה שגויה | HTTP 423, נעילה ל-15 דקות | `MAX_FAILED_LOGINS`, בדיקת יחידה למדיניות |
+| 3 | פסילת Token | התנתקות ואז `GET /api/auth/me` עם הטוקן הישן | 401 `TOKEN_REVOKED` | `TokenVersionGuard` |
+| 4 | מוצר לא פעיל | `isActive: false` ורענון הקטלוג | המוצר אינו מוצג | `listPublic` |
+| 5 | מוצר שאזל | `stock === 0` | המוצר מוצג, אי אפשר להוסיף לעגלה, אפשר להירשם להתראה | `ProductCard`, `CartsService` |
+| 6 | התמדת העגלה | הוספה, סגירת דפדפן, התחברות מחדש | הפריטים נטענים מ-MongoDB | `CartProvider` |
+| 7 | חריגה מהמלאי | כמות גדולה מהמלאי | 400 `OUT_OF_STOCK` | `CartsService.upsertItem` |
+| 8 | נעילת מחיר | שינוי מחיר בקטלוג אחרי קופה | סכום ההזמנה נשאר המחיר שב-snapshot | `OrdersService.checkout` |
+| 9 | הזמנה כפולה | אותו `idempotencyKey` פעמיים | הזמנה אחת | `idempotencykeys` |
+| 10 | גישת לקוח לניהול | `GET /api/products/admin` עם Token של לקוח | 403 | `AdminGuard` |
+| 11 | מעבר סטטוס פסול | מ-`shipped` אל `cancelled` | `ILLEGAL_TRANSITION` | `canTransition`, בדיקת יחידה |
+| 12 | ביטול לפני משלוח | ביטול מ-`confirmed` | המלאי חוזר, התשלום `refunded` | `cancelAndRestock` |
+| 13 | מפתח הזרקה | שדה שמתחיל ב-`$` בגוף הבקשה | המפתח מוסר לפני השירות | `MongoSanitizeMiddleware` |
+| 14 | נפילת Redis | שליפת עגלה בלי `REDIS_URL` | העגלה נקראת מ-MongoDB | `CacheService` |
+
+טבלה 13 — מערך הבדיקות
+
+זרימת CI (`.github/workflows/ci.yml`) רצה על `main`, על `develop` ועל pull request אל `main`: checkout, התקנת תלויות, lint, typecheck, test, build ו-`npm audit`, על הפרויקטים המושפעים ב-Nx.
+
+<a id="ch9-3"></a>
+
+### 9.3 תהליך ההפצה
+
+שני יעדים נפרדים. החנות וספר הפרויקט הם אתר סטטי. ה-API הוא שירות Docker.
+
+| מנגנון | מה הוא עושה |
+| --- | --- |
+| `ci.yml` | איכות הקוד לפני ואחרי מיזוג |
+| `deploy-gh-pages.yml` | בונה את ה-SPA, ממיר את הספר ל-HTML, ובשלב נוסף ל-DOCX לפי `docs/docx-style-guide.md`, ומפרסם את שניהם ל-GitHub Pages אחרי שה-workflow של השרת הצליח |
+| Render Blueprint (`render.yaml`) | בונה את `apps/backend/Dockerfile` מהשורש ומפריס בכל דחיפה ל-`main` (`autoDeployTrigger: commit`) |
+| `deploy-backend.yml` | מאמת `nx build` של השרת. אם הוגדר הסוד `RENDER_DEPLOY_HOOK`, הוא גם קורא ל-hook. כש-auto-deploy של Render דולק, משאירים את ה-hook ריק כדי לא לבנות פעמיים |
+
+טבלה 14 — תהליך ההפצה
+
+כתובות:
+
+- חנות: `https://avivedri3.github.io/bloomstore/`
+- ספר Word: `https://avivedri3.github.io/bloomstore/docs/project-book.docx`
+- API: שירות Render בשם `bloomstore`, אזור Frankfurt, תוכנית חינמית. בדיקת החיות היא `GET /api/health`.
+- אחרי העלייה מגדירים את משתנה ה-Actions `VITE_API_BASE_URL` ל-`https://<service>.onrender.com/api` ומריצים שוב את Deploy to GitHub Pages.
+
+משתני סביבה קריטיים ב-Render: `MONGODB_URI` ו-`JWT_SECRET` (לפחות 32 תווים). מומלצים גם `DB_NAME=bloomstore`, `JWT_EXPIRES_IN=8h`, `CORS_ORIGINS=https://avivedri3.github.io`, `FRONTEND_URL=https://avivedri3.github.io/bloomstore/`. `REDIS_URL` אופציונלי. בלי `MONGODB_URI` או `JWT_SECRET` התהליך נעצר בעלייה. טרנזקציות הביטול דורשות replica set, ו-Atlas מספק אותו. ב-Network Access של Atlas יש לאפשר את כתובות Render.
+
+בניית Docker המקומית:
+
+```bash
+docker build -f apps/backend/Dockerfile -t bloomstore-api .
+```
+
+הקשר של ה-Docker הוא שורש הריפו, לא התיקייה `apps/backend`, כי השרת תלוי ב-`libs/shared-types`.
 
 ---
 
+<a id="ch10"></a>
+
 ## פרק 10 — סיכום ומסקנות
 
-BloomStore מממשת חנות פרחים מלאה במבנה מונורפו Nx עם הפרדת שכבות קשיחה, אחד-עשר אוספים, ודפוסי אבטחה ומסחר הנדרשים לפרויקט גמר. הלקח המרכזי: צילום מחיר ומכונת מצבים מונעים חוסר עקביות בין קטלוג להזמנה; Token Versioning פשוט יותר מ-blacklist מלא לביטול סשן.
+<a id="ch10-1"></a>
 
-הרחבות עתידיות: ספק תשלום אמיתי דרך webhooks הקיימים, חיפוש טקסט מלא, והתראות מלאי בדוא"ל.
+### 10.1 הישגים טכניים
 
-**ביבליוגרפיה / מקורות השראה:** מאגר iAgent (CI/CD ו-Nx), front-simple-shop (מבנה דפי חנות), הנחיות ספר פרויקט אורט.
+- חנות Full-Stack מלאה במונורפו Nx: קטלוג, חשבון, עגלה, קופה, הזמנות ולוח ניהול.
+- מודול הזדהות עם נעילת חשבון אחרי חמישה כישלונות ופסילה מיידית של Tokens דרך `tokenVersion`.
+- ניהול מוגן ב-Guard, עם Soft Delete, יומן ביקורת ודשבורד שמריץ שאילתות במקביל.
+- עגלה מתמידה עם Cache מסוג Write-Through, כש-MongoDB הוא מקור האמת.
+- נעילת מחיר בשורת ההזמנה, מכונת מצבים, והחזרת מלאי בטרנזקציה לפני משלוח.
+- מדריך סגנון אחד: ורד מאובק, מרווה וקרם, Fraunces ו-DM Sans.
+- הפצה כפולה: GitHub Pages לחנות ולספר, Render ל-API.
+- API מתועד ב-Swagger, וספר הפרויקט נגיש ב-`GET /api/docs`.
+
+<a id="ch10-2"></a>
+
+### 10.2 אתגרים ומה שנלמד
+
+בצד השרת, Access Token יחיד בלי Refresh מחייב תוקף ארוך מספיק לשימוש בחנות. שמונה שעות הן פשרה. החיסרון הוא Token גנוב שנשאר בתוקף עד שפג או עד התנתקות. `tokenVersion` סוגר את החלק הזה: התנתקות פוסלת את כל האסימונים בלי blacklist.
+
+בצד הלקוח, העגלה והמשתמש נצרכים מדפים רחוקים. ריכוזם ב-Context, מעל `App`, שומר על עקביות בלי להעביר setters בכל רמה.
+
+הלקח העסקי: צילום המחיר ומכונת המצבים מונעים פער בין מה שהלקוח אישר לבין מה שהקטלוג מראה אחר כך. ביטול בלי טרנזקציה היה משאיר מלאי שגוי. סדר השכבות בשרת הוא חלק מהנכונות של המערכת, לא פרט של ארגון תיקיות.
+
+<a id="ch10-3"></a>
+
+### 10.3 פיתוחים עתידיים
+
+1. ספק סליקה אמיתי על גבי קולקציות ה-webhook שכבר קולטות אירוע פעם אחת.
+2. קיצור חיי ה-Token והוספת Refresh בצד הלקוח.
+3. חבילת בדיקות E2E שרצה על תרחישי טבלה 13 בכל דחיפה.
+4. חיפוש טקסט מלא בקטלוג.
+5. דירוגים וביקורות למוצרים.
+6. התראת דוא״ל גם בשינוי סטטוס הזמנה, על גבי `MailService` שכבר שולח התראת מלאי.
+
+<a id="ch10-4"></a>
+
+### 10.4 תודות
+
+תודה למנחה הפרויקט, מור ברגיג, על הליווי לאורך שלבי הפיתוח. תודה לבית הספר אורט סינגאלובסקי על המסגרת ועל דרישות ספר הפרויקט. תודה לקהילת הקוד הפתוח, שהספריות והתיעוד שלה הם הבסיס שעליו נבנתה המערכת. תודה למשפחה ולחברים על הסבלנות ועל התמיכה.
+
+### מקורות
+
+- תיעוד NestJS, React, MongoDB, MUI ו-Nx.
+- מאגר iAgent, כהשראה למבנה ה-CI ולמונורפו.
+- front-simple-shop, כהשראה למבנה דפי חנות.
+- הנחיות ספר פרויקט של אורט, ומדריך הסגנון הפנימי `apps/frontend/STYLE_GUIDE.md`.
+- `RENDER_DEPLOYMENT.md` וקבצי ה-workflow תחת `.github/workflows`.

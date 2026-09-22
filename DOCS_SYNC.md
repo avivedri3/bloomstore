@@ -1,6 +1,18 @@
 # Documentation-to-code synchronization protocol
 
-BloomStore is both a running product and an ORT diploma artifact. The Hebrew project book in `docs/project-book.md` must stay aligned with the repository.
+BloomStore is both a running product and an ORT Software Technician diploma artifact (מכללת אורט סינגאלובסקי, מסלול טכנאי תוכנה). The Hebrew project book in `docs/project-book.md` must stay aligned with the repository.
+
+The conversion procedure lives in the `docs/` folder, not in this file:
+
+| Role | Path |
+| --- | --- |
+| Procedure | `docs/book-conversion-guide.md` |
+| Appendix A — identity | `docs/student-qa-appendix.md` |
+| Appendix B — code-to-chapter map | `docs/appendices/source-map.md` |
+| Appendix C — required outline | `docs/appendices/book-outline.md` |
+| Word design | `docs/docx-style-guide.md` |
+
+Follow that guide when editing the book. Do not keep a second chapter map here.
 
 ## When this protocol applies
 
@@ -9,23 +21,15 @@ Update the project book in the **same change set** as the code when you:
 - add, rename, or remove a MongoDB collection or Mongoose field
 - change an HTTP route, status code, or `ApiResponse` envelope
 - add a design pattern (Price Snapshot, Write-Through Cache, State Machine, Token Versioning, Account Lockout)
+- change a screen, `App.tsx` route, or admin tab
+- change a style token in `STYLE_GUIDE.md` or `tokens.ts`
 - change CI/CD workflows or deployment targets
 - change the testing plan (unit / E2E)
+- change an identity fact in `docs/student-qa-appendix.md`
 
-## Mapping (chapter → source of truth)
+## Mapping
 
-| Chapter | Code / config source |
-| --- | --- |
-| 1 מבוא | `README.md` |
-| 2 תיאור המערכת | `AGENTS.md`, frontend routes, backend modules |
-| 3 ניתוח | Use cases in `docs/project-book.md` ↔ controllers |
-| 4 עיצוב | 3-tier folders under `apps/backend/src` |
-| 5 מסד נתונים | `apps/backend/src/**/models` (11 collections) |
-| 6 מימוש | Services + `libs/shared-types` |
-| 7 ממשק | `apps/frontend/src/pages` |
-| 8 בדיקות | `*.spec.ts`, `*.test.tsx`, STP chapter |
-| 9 הדרכה | README + seed users |
-| 10 סיכום | Keep lessons learned current |
+Chapter → source files: `docs/appendices/source-map.md`. Required headings: `docs/appendices/book-outline.md`.
 
 ## Live documentation
 
@@ -33,7 +37,8 @@ Update the project book in the **same change set** as the code when you:
 - API: `GET /api/docs` (NestJS streams the file)
 - REST reference: `apps/backend/README.md`, served at `GET /api/docs/readme`
 - OpenAPI: Swagger UI at `/api/swagger`, spec at `/api/swagger-json`
-- Static: GitHub Pages copies converted HTML next to the SPA during `deploy-gh-pages.yml` (source: GitHub Actions). Backend deploys via `deploy-backend.yml`.
+- Static HTML: GitHub Pages copies converted HTML next to the SPA during `deploy-gh-pages.yml` (source: GitHub Actions). Backend deploys via `deploy-backend.yml`.
+- Word export: an additional Pages step, after the HTML conversion, writes `project-book.docx` from `docs/project-book.md` using `docs/docx-style-guide.md`. Regenerate with `python3 scripts/convert-project-book-docx.py`. Do not hand-edit the docx.
 
 ## Checklist before merge
 
