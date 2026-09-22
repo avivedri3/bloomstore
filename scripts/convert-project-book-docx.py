@@ -765,7 +765,7 @@ def assert_book(document: Document, output: Path) -> None:
         raise SystemExit(f"Expected 3 figure captions, found {len(figures)}")
     if len(document.tables) != 14:
         raise SystemExit(f"Expected 14 tables, found {len(document.tables)}")
-    for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנט", "docker build", "תוכן עניינים"):
+    for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנטית", "אני מצהירה", "docker build", "תוכן עניינים"):
         if needle not in text:
             raise SystemExit(f"Missing expected text: {needle}")
     if "<div" in text or "```" in text:
