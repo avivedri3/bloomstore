@@ -163,13 +163,14 @@ def apply_run_font(run, font: str, size_pt: float, *, bold: bool = False, color:
 
 # An English term inside a Hebrew sentence: words, paths, versions, and the
 # parentheses that belong to that term only. Sentence punctuation stays outside.
+# Direction is set on the Word run (w:rtl). Unicode bidi controls are stripped:
+# Word reorders the same text again and the marks scramble mixed lines.
+BIDI_CONTROLS = re.compile("[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]")
 LATIN_PHRASE = re.compile(
     r"\(?@?[A-Za-z][A-Za-z0-9_+#@]*"
     r"(?:[./:\\-][A-Za-z0-9_+#@]+|\s+\d+\+?|\s+[A-Za-z][A-Za-z0-9_+#@]*|\s*[+·]\s*[A-Za-z0-9_+#@]+)*"
     r"\)?"
 )
-LTR_ISOLATE = "\u2066"
-POP_ISOLATE = "\u2069"
 
 
 def split_scripts(text: str) -> list[tuple[str, str]]:
@@ -188,9 +189,10 @@ def split_scripts(text: str) -> list[tuple[str, str]]:
 def add_text(paragraph, text: str, *, bold: bool = False, size: float | None = None, color: str | None = None) -> None:
     point_size = STYLE["body_pt"] if size is None else size
     ink = color or STYLE["ink"]
+    text = BIDI_CONTROLS.sub("", text)
     for script, chunk in split_scripts(text):
         if script == "lat":
-            run = paragraph.add_run(f"{LTR_ISOLATE}{chunk}{POP_ISOLATE}")
+            run = paragraph.add_run(chunk)
             apply_run_font(run, STYLE["latin_font"], point_size, bold=bold, color=ink, rtl=False)
         else:
             run = paragraph.add_run(chunk)
@@ -206,7 +208,7 @@ def add_inline(paragraph, text: str, *, bold: bool = False, size: float | None =
         if match.group(1) is not None:
             add_text(paragraph, match.group(1), bold=True, size=point_size, color=color)
         else:
-            run = paragraph.add_run(f"{LTR_ISOLATE}{match.group(2)}{POP_ISOLATE}")
+            run = paragraph.add_run(BIDI_CONTROLS.sub("", match.group(2)))
             apply_run_font(
                 run,
                 STYLE["code_font"],
@@ -521,7 +523,7 @@ def render_code(document: Document, lines: list[str]) -> None:
     for index, line in enumerate(lines):
         if index:
             paragraph.add_run().add_break()
-        run = paragraph.add_run(line if line else " ")
+        run = paragraph.add_run(BIDI_CONTROLS.sub("", line) if line else " ")
         apply_run_font(run, STYLE["code_font"], STYLE["code_pt"], color=STYLE["ink"], rtl=False)
 
 
