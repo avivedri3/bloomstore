@@ -27,6 +27,8 @@ async function bootstrap(): Promise<void> {
   app.useGlobalFilters(new ApiExceptionFilter());
   app.use(
     helmet({
+      // The storefront on GitHub Pages reads this API from another origin.
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
@@ -37,11 +39,26 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
-  const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000,https://avivedri3.github.io')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
-  app.enableCors({ origin: origins, credentials: true });
+  const origins = [
+    ...new Set(
+      (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+        .concat(['http://localhost:3000', 'https://avivedri3.github.io']),
+    ),
+  ];
+  // Public Pages -> loopback is a private-network request. Chrome blocks it
+  // unless the preflight response allows that access.
+  app.use((_req: unknown, res: { setHeader: (name: string, value: string) => void }, next: () => void) => {
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
+    next();
+  });
+  app.enableCors({
+    origin: origins,
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
 
   const hits = new Map<string, { count: number; reset: number }>();
   app.use((req: { ip?: string; path?: string }, res: { status: (n: number) => { json: (b: unknown) => void } }, next: () => void) => {
