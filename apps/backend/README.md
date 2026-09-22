@@ -63,15 +63,16 @@ Rate limit: ~20 login/register attempts per IP per minute.
 
 ### Products
 
-Public listings hide `isActive: false` and `stock === 0`.
+Public listings hide `isActive: false`. Out-of-stock products remain listed; `POST /products/:id/stock-alerts` stores a waitlist email (not returned on the public DTO). Cart still rejects `stock === 0`.
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| GET | `/products` | — | Public catalog (`?category=`) |
-| GET | `/products/:id` | — | Public product detail |
+| GET | `/products` | — | Public catalog (`?category=`), in-stock first |
+| GET | `/products/:id` | — | Public product detail (including out of stock) |
+| POST | `/products/:id/stock-alerts` | — | Email waitlist when stock returns |
 | GET | `/products/admin` | Admin | All products |
 | POST | `/products` | Admin | Create product |
-| PATCH | `/products/:id` | Admin | Update product |
+| PATCH | `/products/:id` | Admin | Update product (restock sends waitlist emails) |
 | DELETE | `/products/:id` | Admin | Soft-delete (deactivate) |
 
 ### Cart

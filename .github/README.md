@@ -46,7 +46,7 @@ gh workflow run deploy-gh-pages.yml
 | Name | Where | Purpose |
 | --- | --- | --- |
 | `VITE_BASE_URL` | workflow env | `/bloomstore/` |
-| `VITE_API_BASE_URL` | repo **variable** | Render API, e.g. `https://<service>.onrender.com/api` |
+| `VITE_API_BASE_URL` | repo **variable** (optional) | API base including `/api`. Unset builds call `http://localhost:3030/api` |
 | `RENDER_DEPLOY_HOOK` | repo **secret** | Render deploy hook URL |
 
 GitHub → **Settings → Pages → Source: GitHub Actions**.
@@ -57,6 +57,6 @@ GitHub → **Settings → Pages → Source: GitHub Actions**.
 
 **Pages fails** — Pages source must be GitHub Actions; the workflow needs `pages: write` and `id-token: write`.
 
-**Empty catalog on Pages** — set `VITE_API_BASE_URL` to the live Render API, then rerun **Deploy to GitHub Pages**.
+**Catalog calls localhost** — that is the fallback when `VITE_API_BASE_URL` is unset. Set the variable to the live API, then rerun **Deploy to GitHub Pages**.
 
 **Render not updating** — add `RENDER_DEPLOY_HOOK`, or deploy from the Render dashboard as in `RENDER_DEPLOYMENT.md`.

@@ -1,12 +1,17 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { setServers } from 'node:dns';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ApiExceptionFilter } from './common/api-exception.filter';
 import { setupSwagger } from './swagger/setup-swagger';
 
 async function bootstrap(): Promise<void> {
+  // Node's recursive SRV lookup sometimes returns EBADRESP for mongodb+srv on local macOS DNS.
+  if (process.env.NODE_ENV !== 'production') {
+    setServers(['8.8.8.8', '1.1.1.1']);
+  }
   const logger = new Logger('BloomStore');
   const jwt = process.env.JWT_SECRET;
   const mongo = process.env.MONGODB_URI;
@@ -32,7 +37,7 @@ async function bootstrap(): Promise<void> {
       },
     }),
   );
-  const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
+  const origins = (process.env.CORS_ORIGINS ?? 'http://localhost:3000,https://avivedri3.github.io')
     .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
@@ -41,7 +46,11 @@ async function bootstrap(): Promise<void> {
   const hits = new Map<string, { count: number; reset: number }>();
   app.use((req: { ip?: string; path?: string }, res: { status: (n: number) => { json: (b: unknown) => void } }, next: () => void) => {
     const path = req.path ?? '';
-    if (!path.includes('/auth/login') && !path.includes('/auth/register')) {
+    if (
+      !path.includes('/auth/login') &&
+      !path.includes('/auth/register') &&
+      !path.includes('/stock-alerts')
+    ) {
       next();
       return;
     }

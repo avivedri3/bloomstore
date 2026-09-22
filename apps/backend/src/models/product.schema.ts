@@ -24,6 +24,10 @@ export class Product {
 
   @Prop({ default: true })
   isActive!: boolean;
+
+  /** Waitlist emails for back-in-stock notices. Never exposed on public DTOs. */
+  @Prop({ type: [String], default: [] })
+  stockNotifyEmails!: string[];
 }
 
 export type ProductDocument = HydratedDocument<Product>;

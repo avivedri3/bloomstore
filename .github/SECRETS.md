@@ -16,8 +16,8 @@ Create the hook in Render → BloomStore web service → **Settings → Deploy H
 
 | Variable | Required | Used by |
 | --- | --- | --- |
-| `VITE_API_BASE_URL` | For a working live catalog | `deploy-gh-pages.yml`, `ci.yml` |
+| `VITE_API_BASE_URL` | Optional | `deploy-gh-pages.yml`, `ci.yml` |
 
-Example: `https://bloomstore.onrender.com/api` (no trailing slash issues — include `/api`).
+Example: `https://bloomstore.onrender.com/api` (include `/api`).
 
-The SPA bakes this URL in at build time. After you set or change it, rerun **Deploy to GitHub Pages**.
+The SPA bakes this URL in at build time. When the variable is empty, the client calls `http://localhost:3030/api`. After you set or change it, rerun **Deploy to GitHub Pages**.

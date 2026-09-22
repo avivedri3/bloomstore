@@ -15,6 +15,7 @@ import { Connection, Model, Types } from 'mongoose';
 import { AddressesService } from '../addresses/addresses.service';
 import { AuditService } from '../audit/audit.service';
 import { CartsService } from '../carts/carts.service';
+import { ProductsService } from '../products/products.service';
 import { Cart } from '../models/cart.schema';
 import { IdempotencyKey } from '../models/idempotency-key.schema';
 import { Order, OrderDocument } from '../models/order.schema';
@@ -35,6 +36,7 @@ export class OrdersService {
     private readonly cartsService: CartsService,
     private readonly addresses: AddressesService,
     private readonly audit: AuditService,
+    private readonly catalog: ProductsService,
   ) {}
 
   async checkout(userId: string, input: unknown): Promise<OrderDto> {
@@ -189,6 +191,11 @@ export class OrdersService {
         message: 'Cannot restock after shipping',
       });
     }
+    const productIds = order.items.map((item) => item.productId);
+    const previous = await this.products.find({ _id: { $in: productIds } }).select('_id stock').lean();
+    const wasOutOfStock = new Set(
+      previous.filter((row) => row.stock === 0).map((row) => String(row._id)),
+    );
     const session = await this.connection.startSession();
     try {
       await session.withTransaction(async () => {
@@ -209,6 +216,9 @@ export class OrdersService {
       order.status = 'cancelled';
     } finally {
       await session.endSession();
+    }
+    if (wasOutOfStock.size > 0) {
+      await this.catalog.notifyBackInStock([...wasOutOfStock]);
     }
   }
 

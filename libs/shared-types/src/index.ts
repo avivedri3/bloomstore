@@ -68,6 +68,14 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password'),
 });
 
+export const contactMessageSchema = z.object({
+  fullName: z.string().trim().min(2, 'Enter your name'),
+  email: z.string().trim().email('Enter a valid email').max(254),
+  message: z.string().trim().min(10, 'Tell us a little more (at least 10 characters)').max(2000),
+});
+
+export type ContactMessageDto = z.infer<typeof contactMessageSchema>;
+
 export const productInputSchema = z.object({
   name: z.string().min(2, 'Enter a product name'),
   description: z.string().min(8, 'Description must be at least 8 characters'),
@@ -77,6 +85,15 @@ export const productInputSchema = z.object({
   imageUrl: z.string().url('Enter a valid image URL'),
   isActive: z.boolean().default(true),
 });
+
+export const stockAlertSchema = z.object({
+  email: z.string().trim().email('Enter a valid email').max(254),
+});
+
+export interface StockAlertDto {
+  subscribed: boolean;
+  alreadySubscribed: boolean;
+}
 
 export const cartItemInputSchema = z.object({
   productId: z.string().min(1),

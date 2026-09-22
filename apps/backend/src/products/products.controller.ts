@@ -37,6 +37,13 @@ export class ProductsController {
     return ok(await this.products.getPublic(id));
   }
 
+  @Post(':id/stock-alerts')
+  @ApiOperation({ summary: 'Email me when this product is back in stock' })
+  @ApiEnvelopeOk()
+  async subscribeStockAlert(@Param('id') id: string, @Body() body: unknown) {
+    return ok(await this.products.subscribeStockAlert(id, body));
+  }
+
   @Post()
   @UseGuards(AuthGuard('jwt'), TokenVersionGuard, AdminGuard)
   @ApiAuth()

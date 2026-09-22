@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { resolve } from 'path';
@@ -7,7 +7,8 @@ import { getBuildDate, getPackageVersion } from '../../tools/build-metadata.cjs'
 
 export default defineConfig(({ mode }) => {
   const isProduction = mode === 'production';
-  const base = process.env.VITE_BASE_URL || (isProduction ? '/bloomstore/' : '/');
+  const env = loadEnv(mode || 'development', __dirname, 'VITE_');
+  const base = env.VITE_BASE_URL || process.env.VITE_BASE_URL || '/bloomstore/';
 
   return {
     root: __dirname,
@@ -27,7 +28,24 @@ export default defineConfig(({ mode }) => {
       port: 4300,
       host: '0.0.0.0',
     },
-    plugins: [react({ jsxRuntime: 'automatic' }), nxViteTsPaths()],
+    plugins: [
+      {
+        name: 'redirect-root-to-base',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const path = (req.url ?? '').split('?')[0];
+            if (path === '/' && base !== '/') {
+              res.writeHead(302, { Location: base });
+              res.end();
+              return;
+            }
+            next();
+          });
+        },
+      },
+      react({ jsxRuntime: 'automatic' }),
+      nxViteTsPaths(),
+    ],
     define: {
       __BUILD_DATE__: JSON.stringify(getBuildDate()),
       __APP_VERSION__: JSON.stringify(getPackageVersion()),

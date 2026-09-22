@@ -21,7 +21,7 @@ BloomStore היא מערכת מסחר אלקטרוני למכירת זרי פר�
 
 ### בעיה עסקית
 
-חנויות פרחים קטנות מתקשות לנהל מלאי בזמן אמת, למנוע מכירה במחיר ישן, ולבטל הזמנות תוך החזרת מלאי. BloomStore נועלת מחיר בהזמנה, מסננת מוצרים לא פעילים / אזלו מהמלאי, ומבצעת restock טרנזקציונלי בביטול לפני משלוח.
+חנויות פרחים קטנות מתקשות לנהל מלאי בזמן אמת, למנוע מכירה במחיר ישן, ולבטל הזמנות תוך החזרת מלאי. BloomStore נועלת מחיר בהזמנה, מסתירה מוצרים לא פעילים, מציגה פריטים שאזלו עם הרשמה להתראת מלאי, ומבצעת restock טרנזקציונלי בביטול לפני משלוח.
 
 ---
 
@@ -31,13 +31,13 @@ BloomStore היא מערכת מסחר אלקטרוני למכירת זרי פר�
 
 | תפקיד | יכולות |
 | --- | --- |
-| אורח | קטלוג ודף מוצר |
+| אורח | קטלוג, דף מוצר, יצירת קשר (`/contact`), והרשמה להתראת מלאי כשפריט אזל |
 | לקוח (`customer`) | הרשמה, התחברות, עגלה, כתובות, הזמנה, ביטול לפני `shipped` |
 | מנהל (`admin`) | כל יכולות הלקוח + CRUD מוצרים (מחיקה רכה), סינון הזמנות, שינוי סטטוס, סטטיסטיקות |
 
 ### מודולים פונקציונליים
 
-1. קטלוג ציבורי — רשת מוצרים עם קטגוריה, מחיר, מלאי ותמונה. סינון `isActive: true` ו-`stock > 0`.
+1. קטלוג ציבורי — רשת מוצרים עם קטגוריה, מחיר, מלאי ותמונה. סינון `isActive: true` (פריטים עם `stock === 0` נשארים גלויים עם המתנה למלאי).
 2. אבטחה — JWT עם `tokenVersion`, נעילת חשבון אחרי 5 כשלונות (`ACCOUNT_LOCKED`, HTTP 423), Helmet, CORS, rate limit, סניטציית NoSQL.
 3. עגלה — Write-Through ל-MongoDB + Redis (או מטמון בזיכרון).
 4. הזמנות — מכונת מצבים + צילום מחיר בשורות ההזמנה.
@@ -56,7 +56,9 @@ BloomStore היא מערכת מסחר אלקטרוני למכירת זרי פר�
 
 ### מקרי שימוש עיקריים
 
-**UC-01 צפייה בקטלוג:** אורח פותח `/`. המערכת מחזירה רק מוצרים פעילים עם מלאי.
+**UC-01 צפייה בקטלוג:** אורח פותח `/`. המערכת מחזירה מוצרים פעילים, כולל פריטים שאזלו, ומסדרת במלאי לפני אזל.
+
+**UC-01b התראת מלאי:** אורח מזין אימייל בפריט עם `stock === 0`. הכתובת נשמרת ב-`products.stockNotifyEmails`. כשהמלאי חוזר (עדכון מנהל או restock בביטול הזמנה) נשלח מייל והרשימה מתרוקנת.
 
 **UC-02 התחברות:** הלקוח שולח אימייל וסיסמה. אחרי 5 כשלונות מוחזר 423. הצלחה מחזירה JWT הכולל `tokenVersion`.
 
@@ -121,7 +123,7 @@ React SPA  -->  NestJS Controllers  -->  Services  -->  Mongoose Models
 | קולקציה | מודל | שדות עיקריים |
 | --- | --- | --- |
 | `users` | User | email, passwordHash, role, tokenVersion, failedLoginAttempts, lockUntil |
-| `products` | Product | name, category, price, stock, imageUrl, isActive |
+| `products` | Product | name, category, price, stock, imageUrl, isActive, stockNotifyEmails |
 | `carts` | Cart | userId ייחודי, items[{productId, quantity}] |
 | `orders` | Order | orderNumber, status, items[snapshot], total, addressId |
 | `payments` | Payment | orderId, amount, status, provider |
@@ -145,8 +147,9 @@ React SPA  -->  NestJS Controllers  -->  Services  -->  Mongoose Models
 | GET | `/api/health` | בדיקת חיות |
 | GET | `/api/docs` | ספר הפרויקט |
 | POST | `/api/auth/register` `/login` `/logout` | אימות |
-| GET | `/api/products` | קטלוג ציבורי מסונן |
-| GET/POST/PATCH/DELETE | `/api/products` | ניהול (admin) |
+| GET | `/api/products` | קטלוג ציבורי (כולל אזל מהמלאי) |
+| POST | `/api/products/:id/stock-alerts` | הרשמה להתראת חזרה למלאי |
+| GET/POST/PATCH/DELETE | `/api/products` | ניהול (admin); restock שולח מיילי המתנה |
 | GET/PUT/DELETE | `/api/cart` | עגלה |
 | GET/POST | `/api/addresses` | כתובות |
 | POST | `/api/orders/checkout` | יצירת הזמנה |
@@ -166,7 +169,8 @@ Helmet, CORS לפי `CORS_ORIGINS`, מגבלת קצב על `/auth/login` ו-`/au
 
 ## פרק 7 — ממשק משתמש
 
-- **קטלוג:** כרטיסי מוצר, סינון קטגוריה, הוספה לעגלה.
+- **קטלוג:** כרטיסי מוצר, סינון קטגוריה, הוספה לעגלה, תגית Out of stock והרשמה להתראת מייל.
+- **יצירת קשר:** קישור Contact us בסרגל הניווט לדף `/contact` עם פרטי החנות וטופס פנייה.
 - **התחברות/הרשמה:** טופס MUI; הודעת נעילה אם 423.
 - **עגלה:** שינוי כמות ומחיקה.
 - **Checkout:** בחירת/יצירת כתובת + מפתח idempotency.
@@ -187,7 +191,7 @@ Helmet, CORS לפי `CORS_ORIGINS`, מגבלת קצב על `/auth/login` ו-`/au
 
 ### אינטגרציה / E2E (תרחישים)
 
-1. אורח רואה קטלוג בלי Sunset Bouquet (stock 0).
+1. אורח רואה Sunset Bouquet בקטלוג כ-Out of stock, נרשם להתראת מייל, ואינו יכול להוסיף לעגלה.
 2. לקוח מתחבר, מוסיף מוצר, מזין כתובת, checkout, רואה `pending_payment`.
 3. מנהל מאשר → processing → shipped → delivered.
 4. ביטול מ-`confirmed` מחזיר מלאי.

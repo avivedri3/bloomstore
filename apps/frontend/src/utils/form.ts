@@ -10,3 +10,16 @@ export function fieldErrorsFromZod(error: ZodError): Record<string, string> {
   }
   return fields;
 }
+
+export const emailInputAttrs = {
+  autoCapitalize: 'none',
+  autoCorrect: 'off',
+  spellCheck: false,
+  inputMode: 'email' as const,
+};
+
+export const telInputAttrs = {
+  inputMode: 'tel' as const,
+  minLength: 7,
+  maxLength: 20,
+};

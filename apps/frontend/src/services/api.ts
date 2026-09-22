@@ -1,8 +1,10 @@
 import axios, { AxiosError } from 'axios';
 import type { ApiResponse } from '@bloomstore/shared-types';
 
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim();
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: configuredApiBase || 'http://localhost:3030/api',
 });
 
 api.interceptors.request.use((config) => {

@@ -1,6 +1,6 @@
 # BloomStore frontend style guide
 
-Modern, calm e-commerce UI built on **MUI v7** and a small custom theme. Prefer MUI layout and `sx` over ad-hoc CSS.
+Modern, calm florist UI built on **MUI v7** and a small custom theme. Prefer MUI layout and `sx` over ad-hoc CSS.
 
 ## Principles
 
@@ -14,30 +14,34 @@ Modern, calm e-commerce UI built on **MUI v7** and a small custom theme. Prefer 
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| Rose | `#c45c7a` | Primary actions, app bar gradient |
-| Leaf | `#3d6b4f` | Secondary accents, links, success chips |
-| Cream | `#fbf6f0` | Page background |
-| Ink | `#1f2933` | Body text |
+| Dusty rose | `#c45c7a` | Primary actions, logo mark, selected chips |
+| Sage | `#3d6b4f` | Accents, links, account avatar |
+| Cream | `#fbf6f0` | Page background (not plain white) |
+| Parchment | `#fffaf6` | Cards, frosted header |
+| Charcoal | `#1f2933` | Body text |
 
-**Typography:** [Fraunces](https://fonts.google.com/specimen/Fraunces) for headings, [DM Sans](https://fonts.google.com/specimen/DM+Sans) for UI copy.
+**Typography:** [Fraunces](https://fonts.google.com/specimen/Fraunces) serif for headings, [DM Sans](https://fonts.google.com/specimen/DM+Sans) for body copy and UI.
+
+**App shell:** quiet cream `AppBar` (logo, Catalog, Orders, Cart, account) → `main` → `Footer`. No hamburger menu. Admin lives in the account menu.
+
+**Catalog:** full-width photo hero + “Shop Flowers” CTA; `CategoryPills`; `ProductCard` tiles (including out-of-stock with Notify me); `StockNotifyForm` on the product page; `ProductCardSkeleton` while loading; `EmptyState` when a collection is empty.
 
 ## Layout
 
 | Component | When to use |
 | --- | --- |
 | `PageShell` | Default page container (`maxWidth="lg"`, vertical padding) |
-| `PageHeader` | Title + optional subtitle + toolbar actions |
-| `SurfaceCard` | Cart lines, orders, admin rows |
+| `PageHeader` | Title + optional eyebrow / subtitle / toolbar actions |
+| `SurfaceCard` | Cart lines, orders, admin rows, auth forms |
+| `EmptyState` | Zero-result catalog, empty cart, empty orders |
 | `PageLoading` | Auth gate / async shell |
-
-**App shell:** `AppBar` (sticky) → `main` (flex grow) → `Footer`.
 
 ## Components
 
 - **Buttons:** `variant="contained"` for primary CTA, `outlined` for secondary, `text` in app bar. No ALL CAPS (`textTransform: 'none'` globally).
 - **Forms:** `TextField` `outlined`, full width on narrow pages (`maxWidth="sm"` shell).
-- **Feedback:** `Alert` for errors, `Chip` for status, `CircularProgress` for loading.
-- **Catalog:** `Card` + `CardMedia` (200px height) + `Chip` category + `CardActions`.
+- **Feedback:** `Alert` for errors, `StatusChip` for order status, `CircularProgress` for loading.
+- **Catalog:** homepage photo hero with “Shop Flowers” CTA; `CategoryPills`; `ProductCard` with responsive image height and hover lift on pointer devices.
 - **Spacing:** use theme spacing (`sx={{ mt: 2 }}`) or `Stack spacing={2}` — prefer `2`, `3`, `4` for rhythm.
 
 ## `sx` examples
@@ -47,7 +51,7 @@ Modern, calm e-commerce UI built on **MUI v7** and a small custom theme. Prefer 
   <Typography variant="h6">₪{price}</Typography>
 </Stack>
 
-<Paper sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }} />
+<Paper sx={{ p: 3, borderRadius: 3, bgcolor: 'background.paper' }} />
 ```
 
 ## Files
@@ -58,10 +62,12 @@ Modern, calm e-commerce UI built on **MUI v7** and a small custom theme. Prefer 
 | `src/theme/theme.ts` | MUI `createTheme` + component overrides |
 | `src/main.tsx` | `ThemeProvider` + `CssBaseline` |
 | `src/components/layout/*` | Shared layout primitives |
+| `src/components/ProductCard.tsx` | Catalog product tile |
+| `src/components/CatalogHero.tsx` | Homepage photo hero |
 
 ## Checklist for new screens
 
 - [ ] Uses `PageShell` + `PageHeader`
 - [ ] No new hard-coded hex colors (use `theme.palette` or tokens)
-- [ ] Loading and empty states use MUI typography / progress
+- [ ] Loading and empty states use MUI typography / progress / `EmptyState`
 - [ ] Primary action is a contained button at the end of the flow

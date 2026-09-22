@@ -1,16 +1,20 @@
 import { useState, type FormEvent } from 'react';
-import { Alert, Button, Link, Paper, Stack, TextField, Typography } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { Alert, Button, Link, Stack, TextField, Typography } from '@mui/material';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { loginSchema } from '@bloomstore/shared-types';
 import { PageHeader } from '../components/layout/PageHeader';
 import { PageShell } from '../components/layout/PageShell';
+import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { useAuth } from '../context/AuthContext';
 import { ApiClientError } from '../services/api';
-import { fieldErrorsFromZod } from '../utils/form';
+import { fieldErrorsFromZod, emailInputAttrs } from '../utils/form';
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
+  const returnTo = from && from.startsWith('/') && !from.startsWith('//') ? from : '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +33,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(parsed.data.email, parsed.data.password);
-      navigate('/');
+      navigate(returnTo);
     } catch (err) {
       const ax = err as ApiClientError;
       setError(ax.code === 'ACCOUNT_LOCKED' ? 'Account locked (HTTP 423). Try again later.' : ax.message);
@@ -40,14 +44,18 @@ export function LoginPage() {
 
   return (
     <PageShell maxWidth="sm">
-      <PageHeader title="Welcome back" subtitle="Sign in to manage your cart and orders." />
-      <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+      <PageHeader
+        eyebrow="Account"
+        title="Welcome back"
+        subtitle="Sign in to manage your cart and orders."
+      />
+      <SurfaceCard sx={{ p: { xs: 3, sm: 4 } }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
-        <Stack component="form" spacing={2} autoComplete="on" onSubmit={(e) => void onSubmit(e)}>
+        <Stack component="form" method="post" spacing={2} autoComplete="on" onSubmit={(e) => void onSubmit(e)}>
           <TextField
             id="login-email"
             name="email"
@@ -60,7 +68,7 @@ export function LoginPage() {
             helperText={fieldErrors.email}
             required
             fullWidth
-            slotProps={{ htmlInput: { autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false } }}
+            slotProps={{ htmlInput: emailInputAttrs }}
           />
           <TextField
             id="login-password"
@@ -81,11 +89,11 @@ export function LoginPage() {
         </Stack>
         <Typography variant="body2" sx={{ mt: 2 }} color="text.secondary">
           New here?{' '}
-          <Link component={RouterLink} to="/register" underline="hover">
+          <Link component={RouterLink} to="/register" state={{ from: returnTo }} underline="hover">
             Create an account
           </Link>
         </Typography>
-      </Paper>
+      </SurfaceCard>
     </PageShell>
   );
 }

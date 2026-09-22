@@ -32,6 +32,7 @@ import { User, UserSchema } from './models/user.schema';
 import { WebhookEvent, WebhookEventSchema } from './models/webhook-event.schema';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
+import { MailService } from './mail/mail.service';
 import { ProductsController } from './products/products.controller';
 import { ProductsService } from './products/products.service';
 import { SeedService } from './seed/seed.service';
@@ -95,6 +96,7 @@ const models = [
     AdminGuard,
     CacheService,
     AuditService,
+    MailService,
     SequencesService,
     AuthService,
     ProductsService,

@@ -8,7 +8,7 @@ import { CartProvider } from './context/CartContext';
 import { bloomTheme } from './theme/theme';
 import './index.css';
 
-const basename = import.meta.env.VITE_BASE_URL || '/';
+const basename = import.meta.env.VITE_BASE_URL || '/bloomstore/';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

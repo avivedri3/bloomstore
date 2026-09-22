@@ -57,10 +57,11 @@ export class CartsService {
   }
 
   async removeItem(userId: string, productId: string): Promise<CartDto> {
-    await this.carts.updateOne(
-      { userId: new Types.ObjectId(userId) },
-      { $pull: { items: { productId: new Types.ObjectId(productId) } } },
-    );
+    const cart = await this.carts.findOne({ userId: new Types.ObjectId(userId) });
+    if (cart) {
+      cart.items = cart.items.filter((item) => item.productId.toString() !== productId);
+      await cart.save();
+    }
     return this.writeThrough(userId);
   }
 

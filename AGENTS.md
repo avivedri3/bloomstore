@@ -10,7 +10,7 @@
 2. **Shared contracts**: DTOs, enums, and Zod schemas belong in `libs/shared-types`. Do not duplicate request/response shapes between frontend and backend.
 3. **Eleven MongoDB collections**: `users`, `products`, `carts`, `orders`, `payments`, `addresses`, `sequences`, `auditlogs`, `webhookevents`, `failedwebhooks`, `idempotencykeys`.
 4. **Security pipeline**: Helmet, CORS whitelist, rate limiting, NoSQL sanitization, JWT with `tokenVersion` revocation, account lockout after 5 failed logins (`ACCOUNT_LOCKED`, HTTP 423).
-5. **Catalog**: public listings must hide `isActive: false` and `stock === 0`.
+5. **Catalog**: public listings hide `isActive: false`. Out-of-stock items stay visible with a waitlist; cart still rejects `stock === 0`.
 6. **Orders**: state machine `pending_payment → confirmed → processing → shipped → delivered` (or `cancelled`). Restock inventory in a transaction when cancelling before `shipped`.
 7. **Price snapshot**: lock unit price and product details on the order document at creation time.
 8. **Cart cache**: write-through — MongoDB is source of truth; Redis (or in-memory fallback) is a cache, never the only copy.

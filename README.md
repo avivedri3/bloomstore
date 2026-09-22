@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:3000/bloomstore/
 - API: http://localhost:3030/api
 - Swagger UI: http://localhost:3030/api/swagger
 - API readme: http://localhost:3030/api/docs/readme (see also [apps/backend/README.md](./apps/backend/README.md))
@@ -55,7 +55,7 @@ npx nx build frontend --configuration=production
 
 ## Architecture (enforced)
 
-Presentation (`controllers`) → business (`services`) → data (`models`). Controllers return `{ success, data }` or `{ success: false, error }`. Public catalog filters `isActive === false` and `stock === 0`. Orders use a status state machine and price snapshots. Logout increments `tokenVersion` so existing JWTs are rejected.
+Presentation (`controllers`) → business (`services`) → data (`models`). Controllers return `{ success, data }` or `{ success: false, error }`. Public catalog hides `isActive === false` (out-of-stock items remain listed). Orders use a status state machine and price snapshots. Logout increments `tokenVersion` so existing JWTs are rejected.
 
 Academic documentation: [docs/project-book.md](./docs/project-book.md). Agent rules: [AGENTS.md](./AGENTS.md). Render: [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md). Docs sync: [DOCS_SYNC.md](./DOCS_SYNC.md).
 
@@ -66,4 +66,4 @@ CI/CD follows the iAgent-style pipeline (see [`.github/README.md`](./.github/REA
 Live site: https://avivedri3.github.io/bloomstore/  
 Project book: https://avivedri3.github.io/bloomstore/docs/
 
-GitHub → **Settings → Pages → Source: GitHub Actions**. Set `VITE_API_BASE_URL` (repo variable) and `RENDER_DEPLOY_HOOK` (repo secret) as in [`.github/SECRETS.md`](./.github/SECRETS.md).
+GitHub → **Settings → Pages → Source: GitHub Actions**. The Pages build uses the `VITE_API_BASE_URL` repo variable when it is set, and `http://localhost:3030/api` when it is not. `RENDER_DEPLOY_HOOK` is a repo secret — see [`.github/SECRETS.md`](./.github/SECRETS.md).
