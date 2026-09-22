@@ -60,7 +60,6 @@ STYLE = {
     "code_fill": "F7F4F0",
 }
 
-PUNCT = set(" \t.,;:!?·—–-()[]{}«»\"'\\/+*=<>|׳״#%&•")
 CAPTION_RE = re.compile(r"^(טבלה|איור) \d+ — ")
 SECTION_RE = re.compile(r"^\d+\.\d+")
 SEPARATOR_CELL_RE = re.compile(r":?-{3,}:?")
@@ -162,31 +161,27 @@ def apply_run_font(run, font: str, size_pt: float, *, bold: bool = False, color:
         r_pr.append(shd)
 
 
+# An English term inside a Hebrew sentence: words, paths, versions, and the
+# parentheses that belong to that term only. Sentence punctuation stays outside.
+LATIN_PHRASE = re.compile(
+    r"\(?@?[A-Za-z][A-Za-z0-9_+#@]*"
+    r"(?:[./:\\-][A-Za-z0-9_+#@]+|\s+\d+\+?|\s+[A-Za-z][A-Za-z0-9_+#@]*|\s*[+·]\s*[A-Za-z0-9_+#@]+)*"
+    r"\)?"
+)
+LTR_ISOLATE = "\u2066"
+POP_ISOLATE = "\u2069"
+
+
 def split_scripts(text: str) -> list[tuple[str, str]]:
     parts: list[tuple[str, str]] = []
-    buf: list[str] = []
-    kind: str | None = None
-
-    def flush() -> None:
-        nonlocal buf
-        if buf and kind:
-            parts.append((kind, "".join(buf)))
-        buf = []
-
-    for char in text:
-        if "\u0590" <= char <= "\u05ff" or "\ufb1d" <= char <= "\ufb4f":
-            script = "he"
-        elif char in PUNCT or char.isspace():
-            script = kind or "he"
-        else:
-            script = "lat"
-        if kind is None:
-            kind = script
-        elif script != kind:
-            flush()
-            kind = script
-        buf.append(char)
-    flush()
+    position = 0
+    for match in LATIN_PHRASE.finditer(text):
+        if match.start() > position:
+            parts.append(("he", text[position : match.start()]))
+        parts.append(("lat", match.group()))
+        position = match.end()
+    if position < len(text):
+        parts.append(("he", text[position:]))
     return parts
 
 
@@ -194,9 +189,12 @@ def add_text(paragraph, text: str, *, bold: bool = False, size: float | None = N
     point_size = STYLE["body_pt"] if size is None else size
     ink = color or STYLE["ink"]
     for script, chunk in split_scripts(text):
-        run = paragraph.add_run(chunk)
-        font = STYLE["hebrew_font"] if script == "he" else STYLE["latin_font"]
-        apply_run_font(run, font, point_size, bold=bold, color=ink)
+        if script == "lat":
+            run = paragraph.add_run(f"{LTR_ISOLATE}{chunk}{POP_ISOLATE}")
+            apply_run_font(run, STYLE["latin_font"], point_size, bold=bold, color=ink, rtl=False)
+        else:
+            run = paragraph.add_run(chunk)
+            apply_run_font(run, STYLE["hebrew_font"], point_size, bold=bold, color=ink, rtl=True)
 
 
 def add_inline(paragraph, text: str, *, bold: bool = False, size: float | None = None, color: str | None = None) -> None:
@@ -208,7 +206,7 @@ def add_inline(paragraph, text: str, *, bold: bool = False, size: float | None =
         if match.group(1) is not None:
             add_text(paragraph, match.group(1), bold=True, size=point_size, color=color)
         else:
-            run = paragraph.add_run(match.group(2))
+            run = paragraph.add_run(f"{LTR_ISOLATE}{match.group(2)}{POP_ISOLATE}")
             apply_run_font(
                 run,
                 STYLE["code_font"],
@@ -759,12 +757,12 @@ def assert_book(document: Document, output: Path) -> None:
         raise SystemExit(f"Missing chapters: {', '.join(missing)}")
     captions = [paragraph.text for paragraph in document.paragraphs if re.match(r"^טבלה \d+ —", paragraph.text)]
     figures = [paragraph.text for paragraph in document.paragraphs if re.match(r"^איור \d+ —", paragraph.text)]
-    if len(captions) != 13:
-        raise SystemExit(f"Expected 13 table captions, found {len(captions)}")
+    if len(captions) != 14:
+        raise SystemExit(f"Expected 14 table captions, found {len(captions)}")
     if len(figures) != 3:
         raise SystemExit(f"Expected 3 figure captions, found {len(figures)}")
-    if len(document.tables) != 13:
-        raise SystemExit(f"Expected 13 tables, found {len(document.tables)}")
+    if len(document.tables) != 14:
+        raise SystemExit(f"Expected 14 tables, found {len(document.tables)}")
     for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנט", "docker build", "תוכן עניינים"):
         if needle not in text:
             raise SystemExit(f"Missing expected text: {needle}")
