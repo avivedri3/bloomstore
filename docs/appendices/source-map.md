@@ -11,11 +11,10 @@
 | 3 | אחד-עשר המסכים | `apps/frontend/src/App.tsx`, `apps/frontend/src/pages/AdminPage.tsx` |
 | 4.1–4.4 | מעטפת, קטלוג, כרטיס | `apps/frontend/src/main.tsx`, `App.tsx`, `context/AuthContext.tsx`, `context/CartContext.tsx`, `pages/CatalogPage.tsx`, `components/ProductCard.tsx`, `services/api.ts` |
 | 4.5 | עיצוב הפרויקט | `apps/frontend/STYLE_GUIDE.md`, `apps/frontend/src/theme/tokens.ts`, `apps/frontend/src/theme/theme.ts` |
-| 5 | הזדהות ונעילה | `apps/backend/src/auth/auth.controller.ts`, `auth.service.ts`, `token-version.guard.ts`, `jwt.strategy.ts`, `models/user.schema.ts`, `libs/shared-types/src/index.ts` (`MAX_FAILED_LOGINS`) |
+| 5 | הזדהות ונעילה | `apps/backend/src/auth/auth.controller.ts`, `auth.service.ts`, `jwt.strategy.ts`, `models/user.schema.ts`, `libs/shared-types/src/index.ts` (`MAX_FAILED_LOGINS`) |
 | 6 | ניהול, ואישור או ביטול הזמנה בסעיף 6.2 | `products.controller.ts`, `products.service.ts`, `orders.controller.ts`, `orders.service.ts`, `analytics.service.ts`, `auth/admin.guard.ts` |
-| 7 | עגלה, קופה, ביטול | `carts/carts.service.ts`, `cache/cache.service.ts`, `orders/orders.service.ts`, `webhooks/webhooks.service.ts` |
+| 7 | עגלה, יצירת הזמנה, ביטול | `carts/carts.service.ts`, `cache/cache.service.ts`, `orders/orders.service.ts` |
 | 8.1 | נקודות קצה | `apps/backend/README.md` והקונטרולרים. אם יש סתירה, הקונטרולר קובע ומתקנים את ה-README |
-| 8.2 | דפוסים | `AGENTS.md` סעיפים 1–8, `apps/backend/src/main.ts`, `common/mongo-sanitize.middleware.ts`, `common/http.ts`, והשירותים שמופיעים בפרקים 5–7 |
 | 9.1–9.2 | פיתוח ובדיקות | `README.md`, `libs/shared-types/src/index.spec.ts`, `apps/backend/src/common/http.spec.ts`, `apps/frontend/src/components/*.test.tsx`, `.github/workflows/ci.yml` |
 | 9.3 | הפצה | `RENDER_DEPLOYMENT.md`, `render.yaml`, `apps/backend/Dockerfile`, `.github/workflows/deploy-gh-pages.yml`, `.github/workflows/deploy-backend.yml` |
 | 10 | סיכום, לקחים, תודות | רק הישגים שכבר מתועדים בפרקים 1–9. תודות למנחה מהנספח א׳ |

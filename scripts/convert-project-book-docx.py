@@ -787,13 +787,13 @@ def assert_book(document: Document, output: Path) -> None:
         raise SystemExit(f"Missing chapters: {', '.join(missing)}")
     captions = [paragraph.text for paragraph in document.paragraphs if re.match(r"^טבלה \d+ —", paragraph.text)]
     figures = [paragraph.text for paragraph in document.paragraphs if re.match(r"^איור \d+ —", paragraph.text)]
-    if len(captions) != 13:
-        raise SystemExit(f"Expected 13 table captions, found {len(captions)}")
+    if len(captions) != 12:
+        raise SystemExit(f"Expected 12 table captions, found {len(captions)}")
     if len(figures) != 8:
         raise SystemExit(f"Expected 8 figure captions, found {len(figures)}")
-    if len(document.tables) != 13:
-        raise SystemExit(f"Expected 13 tables, found {len(document.tables)}")
-    for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנטית", "אני מצהירה", "docker build", "תוכן עניינים"):
+    if len(document.tables) != 12:
+        raise SystemExit(f"Expected 12 tables, found {len(document.tables)}")
+    for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנטית", "אני מצהירה", "תוכן עניינים"):
         if needle not in text:
             raise SystemExit(f"Missing expected text: {needle}")
     if "<div" in text or "```" in text:
