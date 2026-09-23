@@ -789,8 +789,8 @@ def assert_book(document: Document, output: Path) -> None:
     figures = [paragraph.text for paragraph in document.paragraphs if re.match(r"^איור \d+ —", paragraph.text)]
     if len(captions) != 13:
         raise SystemExit(f"Expected 13 table captions, found {len(captions)}")
-    if len(figures) != 3:
-        raise SystemExit(f"Expected 3 figure captions, found {len(figures)}")
+    if len(figures) != 8:
+        raise SystemExit(f"Expected 8 figure captions, found {len(figures)}")
     if len(document.tables) != 13:
         raise SystemExit(f"Expected 13 tables, found {len(document.tables)}")
     for needle in ("אביב לייסטן", "מור ברגיג", "הצהרת הסטודנטית", "אני מצהירה", "docker build", "תוכן עניינים"):
@@ -808,8 +808,8 @@ def assert_book(document: Document, output: Path) -> None:
     leaked = [ch for ch in "\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069" if ch.encode("utf-8") in xml]
     if leaked:
         raise SystemExit("Unicode bidi controls leaked into the Word file")
-    if len(media) != 3:
-        raise SystemExit(f"Expected 3 code screenshots, found {len(media)}")
+    if len(media) != 8:
+        raise SystemExit(f"Expected 8 code screenshots, found {len(media)}")
 
 
 def build(source: Path, output: Path) -> None:
