@@ -76,6 +76,15 @@ export const contactMessageSchema = z.object({
 
 export type ContactMessageDto = z.infer<typeof contactMessageSchema>;
 
+export const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+export const PRODUCT_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+export type ProductImageMimeType = (typeof PRODUCT_IMAGE_MIME_TYPES)[number];
+
+export function isProductImageMime(value: string): value is ProductImageMimeType {
+  return (PRODUCT_IMAGE_MIME_TYPES as readonly string[]).includes(value);
+}
+
 export const productInputSchema = z.object({
   name: z.string().min(2, 'Enter a product name'),
   description: z.string().min(8, 'Description must be at least 8 characters'),

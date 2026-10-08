@@ -1,6 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { setServers } from 'node:dns';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -23,6 +25,9 @@ async function bootstrap(): Promise<void> {
   }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const uploadsRoot = join(process.cwd(), 'uploads');
+  mkdirSync(join(uploadsRoot, 'products'), { recursive: true });
+  app.useStaticAssets(uploadsRoot, { prefix: '/uploads/' });
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new ApiExceptionFilter());
   app.use(

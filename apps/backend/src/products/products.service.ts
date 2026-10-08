@@ -5,6 +5,13 @@ import { Model } from 'mongoose';
 import { Product, ProductDocument } from '../models/product.schema';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../mail/mail.service';
+import {
+  publicProductImageUrl,
+  removeProductImage,
+  saveProductImage,
+  uploadedProductFilename,
+  type UploadedProductImage,
+} from './product-image';
 
 const MAX_STOCK_ALERTS = 100;
 
@@ -47,28 +54,68 @@ export class ProductsService {
     return this.toDto(product);
   }
 
-  async create(input: unknown, actorId: string): Promise<ProductDto> {
-    const dto = productInputSchema.parse(input);
-    const product = await this.products.create(dto);
-    await this.audit.record('product.create', 'products', actorId, String(product._id));
-    return this.toDto(product);
+  async create(
+    input: unknown,
+    image: UploadedProductImage | undefined,
+    publicOrigin: string,
+    actorId: string,
+  ): Promise<ProductDto> {
+    const filename = await saveProductImage(image);
+    const imageUrl = publicProductImageUrl(publicOrigin, filename);
+    try {
+      const dto = productInputSchema.parse(this.withImageUrl(input, imageUrl));
+      const product = await this.products.create(dto);
+      await this.audit.record('product.create', 'products', actorId, String(product._id));
+      return this.toDto(product);
+    } catch (error) {
+      await removeProductImage(filename);
+      throw error;
+    }
   }
 
-  async update(id: string, input: unknown, actorId: string): Promise<ProductDto> {
-    const dto = productInputSchema.partial().parse(input);
+  async update(
+    id: string,
+    input: unknown,
+    actorId: string,
+    image?: UploadedProductImage,
+    publicOrigin?: string,
+  ): Promise<ProductDto> {
     const previous = await this.products.findById(id);
     if (!previous) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found' });
     }
-    const product = await this.products.findByIdAndUpdate(id, dto, { new: true });
-    if (!product) {
-      throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found' });
+    const replacement = image?.buffer?.length ? await saveProductImage(image) : undefined;
+    try {
+      const imageUrl = replacement
+        ? publicProductImageUrl(publicOrigin ?? '', replacement)
+        : undefined;
+      const dto = productInputSchema.partial().parse(this.normalizeUpdate(input, imageUrl));
+      const product = await this.products.findByIdAndUpdate(id, dto, { new: true });
+      if (!product) {
+        throw new NotFoundException({ code: 'NOT_FOUND', message: 'Product not found' });
+      }
+      await this.audit.record('product.update', 'products', actorId, id);
+      if (replacement) {
+        const previousFile = uploadedProductFilename(previous.imageUrl);
+        if (previousFile && previousFile !== replacement) {
+          const keptByOrder = await this.products.db
+            .collection('orders')
+            .countDocuments({ 'items.imageUrl': previous.imageUrl });
+          if (keptByOrder === 0) {
+            await removeProductImage(previousFile);
+          }
+        }
+      }
+      if (previous.stock === 0 && product.stock > 0) {
+        await this.notifyBackInStock([id]);
+      }
+      return this.toDto(product);
+    } catch (error) {
+      if (replacement) {
+        await removeProductImage(replacement);
+      }
+      throw error;
     }
-    await this.audit.record('product.update', 'products', actorId, id);
-    if (previous.stock === 0 && product.stock > 0) {
-      await this.notifyBackInStock([id]);
-    }
-    return this.toDto(product);
   }
 
   async softDelete(id: string, actorId: string): Promise<void> {
@@ -131,6 +178,45 @@ export class ProductsService {
         count: emails.length,
       });
     }
+  }
+
+  private normalizeUpdate(input: unknown, imageUrl?: string) {
+    const body = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+    const next: Record<string, unknown> = {};
+    if (typeof body.name === 'string') next.name = body.name;
+    if (typeof body.description === 'string') next.description = body.description;
+    if (typeof body.category === 'string') next.category = body.category;
+    if (body.price !== undefined && body.price !== '') {
+      next.price = typeof body.price === 'number' ? body.price : Number(body.price);
+    }
+    if (body.stock !== undefined && body.stock !== '') {
+      next.stock = typeof body.stock === 'number' ? body.stock : Number(body.stock);
+    }
+    if (imageUrl) {
+      next.imageUrl = imageUrl;
+    } else if (typeof body.imageUrl === 'string' && body.imageUrl) {
+      next.imageUrl = body.imageUrl;
+    }
+    if (body.isActive === true || body.isActive === 'true') next.isActive = true;
+    if (body.isActive === false || body.isActive === 'false') next.isActive = false;
+    return next;
+  }
+
+  private withImageUrl(input: unknown, imageUrl: string) {
+    const body = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+    const isActive =
+      body.isActive === undefined || body.isActive === ''
+        ? undefined
+        : body.isActive === true || body.isActive === 'true';
+    return {
+      name: body.name,
+      description: body.description,
+      category: body.category,
+      price: typeof body.price === 'number' ? body.price : Number(body.price),
+      stock: typeof body.stock === 'number' ? body.stock : Number(body.stock),
+      imageUrl,
+      ...(isActive === undefined ? {} : { isActive }),
+    };
   }
 
   toDto(product: ProductDocument): ProductDto {

@@ -71,8 +71,8 @@ Public listings hide `isActive: false`. Out-of-stock products remain listed; `PO
 | GET | `/products/:id` | — | Public product detail (including out of stock) |
 | POST | `/products/:id/stock-alerts` | — | Email waitlist when stock returns |
 | GET | `/products/admin` | Admin | All products |
-| POST | `/products` | Admin | Create product |
-| PATCH | `/products/:id` | Admin | Update product (restock sends waitlist emails) |
+| POST | `/products` | Admin | Create product (`multipart/form-data` plus an image file). JPEG, PNG, WebP, or GIF, up to 5 MB. The file is stored in `uploads/products` and served at `/uploads/products/<file>` |
+| PATCH | `/products/:id` | Admin | Update product fields. JSON for a single field such as stock, or `multipart/form-data` with an optional replacement image. Restock sends waitlist emails |
 | DELETE | `/products/:id` | Admin | Soft-delete (deactivate) |
 
 ### Cart

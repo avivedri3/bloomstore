@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Alert,
   Box,
@@ -26,6 +26,9 @@ import {
   ORDER_STATUSES,
   PRODUCT_CATEGORIES,
   canTransition,
+  PRODUCT_IMAGE_MAX_BYTES,
+  PRODUCT_IMAGE_MIME_TYPES,
+  isProductImageMime,
   productInputSchema,
   type AdminStatsDto,
   type OrderDto,
@@ -46,9 +49,23 @@ const emptyProductForm = {
   category: 'bouquets' as (typeof PRODUCT_CATEGORIES)[number],
   price: '',
   stock: '',
-  imageUrl: '',
   isActive: true,
 };
+
+const productFieldsSchema = productInputSchema.omit({ imageUrl: true });
+
+function imageFieldError(file: File): string | null {
+  if (!isProductImageMime(file.type)) {
+    return 'Upload a JPEG, PNG, WebP, or GIF image';
+  }
+  if (file.size === 0) {
+    return 'The image file is empty';
+  }
+  if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+    return 'Image must be 5 MB or smaller';
+  }
+  return null;
+}
 
 export function AdminPage() {
   const theme = useTheme();
@@ -58,6 +75,12 @@ export function AdminPage() {
   const [status, setStatus] = useState<string>('');
   const [stats, setStats] = useState<AdminStatsDto | null>(null);
   const [form, setForm] = useState(emptyProductForm);
+  const [editing, setEditing] = useState<ProductDto | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -76,27 +99,86 @@ export function AdminPage() {
     void loadOrders();
   }, [status]);
 
-  const addProduct = async (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(imageFile);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
+
+  const resetForm = () => {
+    setEditing(null);
+    setForm(emptyProductForm);
+    setImageFile(null);
+    setImageError(null);
+    setFieldErrors({});
+    setFormError(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+  };
+
+  const startEdit = (product: ProductDto) => {
+    setEditing(product);
+    setForm({
+      name: product.name,
+      description: product.description,
+      category: product.category,
+      price: String(product.price),
+      stock: String(product.stock),
+      isActive: product.isActive,
+    });
+    setImageFile(null);
+    setImageError(null);
+    setFieldErrors({});
+    setFormError(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const saveProduct = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setFormError(null);
-    const parsed = productInputSchema.safeParse({
+    const imageProblem = imageFile ? imageFieldError(imageFile) : editing ? null : 'Choose an image file';
+    const parsed = productFieldsSchema.safeParse({
       name: form.name,
       description: form.description,
       category: form.category,
       price: Number(form.price),
       stock: Number(form.stock),
-      imageUrl: form.imageUrl,
       isActive: form.isActive,
     });
+    setImageError(imageProblem);
     if (!parsed.success) {
       setFieldErrors(fieldErrorsFromZod(parsed.error));
+    } else {
+      setFieldErrors({});
+    }
+    if (imageProblem || !parsed.success) {
       return;
     }
-    setFieldErrors({});
+    const data = new FormData();
+    data.append('name', parsed.data.name);
+    data.append('description', parsed.data.description);
+    data.append('category', parsed.data.category);
+    data.append('price', String(parsed.data.price));
+    data.append('stock', String(parsed.data.stock));
+    if (imageFile) {
+      data.append('image', imageFile);
+    }
     setSubmitting(true);
     try {
-      await unwrap(api.post('/products', parsed.data));
-      setForm(emptyProductForm);
+      if (editing) {
+        await unwrap(api.patch(`/products/${editing.id}`, data));
+      } else {
+        await unwrap(api.post('/products', data));
+      }
+      resetForm();
       await loadProducts();
     } catch (err) {
       setFormError((err as Error).message);
@@ -116,9 +198,9 @@ export function AdminPage() {
 
       {tab === 0 && (
         <Box>
-          <Paper variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-            <Stack component="form" method="post" spacing={2} autoComplete="off" onSubmit={(e) => void addProduct(e)}>
-              <Typography variant="h6">Add product</Typography>
+          <Paper ref={formRef} variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+            <Stack component="form" method="post" spacing={2} autoComplete="off" onSubmit={(e) => void saveProduct(e)}>
+              <Typography variant="h6">{editing ? `Edit ${editing.name}` : 'Add product'}</Typography>
               {formError && <Alert severity="error">{formError}</Alert>}
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -207,34 +289,79 @@ export function AdminPage() {
                   />
                 </Grid>
                 <Grid size={12}>
-                  <TextField
-                    id="product-image-url"
-                    name="product-image-url"
-                    fullWidth
-                    required
-                    label="Image URL"
-                    type="url"
-                    autoComplete="off"
-                    value={form.imageUrl}
-                    onChange={(e) => setForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
-                    error={Boolean(fieldErrors.imageUrl)}
-                    helperText={fieldErrors.imageUrl}
-                  />
+                  <Stack spacing={1}>
+                    <Typography id="product-image-label" variant="subtitle2">
+                      Product image
+                    </Typography>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+                      <Button variant="outlined" component="label" sx={{ alignSelf: 'flex-start' }}>
+                        Choose image
+                        <input
+                          ref={imageInputRef}
+                          id="product-image"
+                          name="product-image"
+                          type="file"
+                          accept={PRODUCT_IMAGE_MIME_TYPES.join(',')}
+                          hidden
+                          aria-labelledby="product-image-label"
+                          onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            setImageFile(file);
+                            setImageError(file ? imageFieldError(file) : null);
+                          }}
+                        />
+                      </Button>
+                      <Typography variant="body2" color={imageError ? 'error' : 'text.secondary'}>
+                        {imageError ??
+                          (imageFile
+                            ? imageFile.name
+                            : editing
+                              ? 'Choose a file only if you want to replace the current image.'
+                              : 'JPEG, PNG, WebP, or GIF. Up to 5 MB.')}
+                      </Typography>
+                    </Stack>
+                    {(previewUrl || editing?.imageUrl) && (
+                      <Box
+                        component="img"
+                        src={previewUrl ?? editing?.imageUrl}
+                        alt={editing ? editing.name : 'Selected product image'}
+                        sx={{ width: 180, height: 120, objectFit: 'cover', borderRadius: 2 }}
+                      />
+                    )}
+                  </Stack>
                 </Grid>
               </Grid>
-              <Button type="submit" variant="contained" disabled={submitting} sx={{ alignSelf: 'flex-start' }}>
-                {submitting ? 'Adding…' : 'Add product'}
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button type="submit" variant="contained" disabled={submitting} sx={{ alignSelf: 'flex-start' }}>
+                  {submitting ? 'Saving…' : editing ? 'Save changes' : 'Add product'}
+                </Button>
+                {editing && (
+                  <Button type="button" variant="text" disabled={submitting} onClick={resetForm}>
+                    Cancel
+                  </Button>
+                )}
+              </Stack>
             </Stack>
           </Paper>
           {products.map((p) => (
             <SurfaceCard key={p.id}>
               <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
-                <Typography>
-                  {p.name} · ₪{p.price} · stock {p.stock} {p.stock === 0 ? '· out of stock' : ''}{' '}
-                  {p.isActive ? '' : '(inactive)'}
-                </Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    component="img"
+                    src={p.imageUrl}
+                    alt=""
+                    sx={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 1.5, flexShrink: 0 }}
+                  />
+                  <Typography>
+                    {p.name} · ₪{p.price} · stock {p.stock} {p.stock === 0 ? '· out of stock' : ''}{' '}
+                    {p.isActive ? '' : '(inactive)'}
+                  </Typography>
+                </Stack>
                 <Stack direction="row" spacing={1}>
+                  <Button size="small" variant={editing?.id === p.id ? 'contained' : 'outlined'} onClick={() => startEdit(p)}>
+                    Edit
+                  </Button>
                   {p.stock === 0 ? (
                     <Button
                       size="small"

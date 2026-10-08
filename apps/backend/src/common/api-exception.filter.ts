@@ -15,6 +15,10 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>();
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+        res.status(status).json(fail('IMAGE_TOO_LARGE', 'Image must be 5 MB or smaller'));
+        return;
+      }
       const payload = exception.getResponse();
       const message =
         typeof payload === 'string'
