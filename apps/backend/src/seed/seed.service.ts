@@ -116,7 +116,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 99,
     stock: 12,
-    imageUrl: unsplash('photo-1501004318641-b39e6451bec6'),
+    imageUrl: unsplash('photo-1593691509543-c55fb32d8de5'),
     isActive: true,
   },
   {
@@ -125,7 +125,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 129,
     stock: 9,
-    imageUrl: unsplash('photo-1614594975525-e45190c55d0b'),
+    imageUrl: pexels('1233414/pexels-photo-1233414.jpeg'),
     isActive: true,
   },
   {
@@ -134,7 +134,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 79,
     stock: 22,
-    imageUrl: unsplash('photo-1459411552884-841db9b3cc2a'),
+    imageUrl: pexels('1408221/pexels-photo-1408221.jpeg'),
     isActive: true,
   },
   {
@@ -152,7 +152,7 @@ const CATALOG: Array<{
     category: 'sympathy',
     price: 245,
     stock: 3,
-    imageUrl: pexels('807598/pexels-photo-807598.jpeg'),
+    imageUrl: unsplash('photo-1526047932273-341f2a7631f9'),
     isActive: true,
   },
   {
@@ -161,7 +161,7 @@ const CATALOG: Array<{
     category: 'sympathy',
     price: 155,
     stock: 10,
-    imageUrl: unsplash('photo-1522673607200-164d1b6ce486'),
+    imageUrl: pexels('2879824/pexels-photo-2879824.jpeg'),
     isActive: true,
   },
   {
@@ -215,7 +215,7 @@ const CATALOG: Array<{
     category: 'roses',
     price: 182,
     stock: 12,
-    imageUrl: pexels('102129/pexels-photo-102129.jpeg'),
+    imageUrl: pexels('931179/pexels-photo-931179.jpeg'),
     isActive: true,
   },
   {
@@ -224,7 +224,7 @@ const CATALOG: Array<{
     category: 'seasonal',
     price: 145,
     stock: 20,
-    imageUrl: pexels('1128797/pexels-photo-1128797.jpeg'),
+    imageUrl: unsplash('photo-1561181286-d3fee7d55364'),
     isActive: true,
   },
   {
@@ -233,7 +233,7 @@ const CATALOG: Array<{
     category: 'seasonal',
     price: 135,
     stock: 15,
-    imageUrl: pexels('133472/pexels-photo-133472.jpeg'),
+    imageUrl: unsplash('photo-1470509037663-253afd7f0f51'),
     isActive: true,
   },
   {
@@ -260,7 +260,7 @@ const CATALOG: Array<{
     category: 'bouquets',
     price: 175,
     stock: 10,
-    imageUrl: pexels('1379636/pexels-photo-1379636.jpeg'),
+    imageUrl: unsplash('photo-1533616688419-b7a585564566'),
     isActive: true,
   },
   {
@@ -305,7 +305,7 @@ const CATALOG: Array<{
     category: 'weddings',
     price: 145,
     stock: 12,
-    imageUrl: pexels('265722/pexels-photo-265722.jpeg'),
+    imageUrl: pexels('931158/pexels-photo-931158.jpeg'),
     isActive: true,
   },
   {
@@ -323,7 +323,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 149,
     stock: 7,
-    imageUrl: unsplash('photo-1416879595882-3373a0480b5b'),
+    imageUrl: pexels('850359/pexels-photo-850359.jpeg'),
     isActive: true,
   },
   {
@@ -332,7 +332,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 119,
     stock: 11,
-    imageUrl: pexels('1407305/pexels-photo-1407305.jpeg'),
+    imageUrl: unsplash('photo-1525310072745-f49212b5ac6d'),
     isActive: true,
   },
   {
@@ -341,7 +341,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 89,
     stock: 16,
-    imageUrl: unsplash('photo-1593691509543-c55fb32d8de5'),
+    imageUrl: pexels('462118/pexels-photo-462118.jpeg'),
     isActive: true,
   },
   {
@@ -350,7 +350,7 @@ const CATALOG: Array<{
     category: 'plants',
     price: 159,
     stock: 6,
-    imageUrl: pexels('1470177/pexels-photo-1470177.jpeg'),
+    imageUrl: pexels('132474/pexels-photo-132474.jpeg'),
     isActive: true,
   },
   {
@@ -359,7 +359,7 @@ const CATALOG: Array<{
     category: 'sympathy',
     price: 225,
     stock: 5,
-    imageUrl: pexels('1154189/pexels-photo-1154189.jpeg'),
+    imageUrl: unsplash('photo-1469259943454-aa100abba749'),
     isActive: true,
   },
   {
