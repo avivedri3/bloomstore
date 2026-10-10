@@ -12,7 +12,7 @@
 | 4.1–4.4 | מעטפת, קטלוג, כרטיס | `apps/frontend/src/main.tsx`, `App.tsx`, `context/AuthContext.tsx`, `context/CartContext.tsx`, `pages/CatalogPage.tsx`, `components/ProductCard.tsx`, `services/api.ts` |
 | 4.5 | עיצוב הפרויקט | `apps/frontend/STYLE_GUIDE.md`, `apps/frontend/src/theme/tokens.ts`, `apps/frontend/src/theme/theme.ts` |
 | 5 | הזדהות ונעילה | `apps/backend/src/auth/auth.controller.ts`, `auth.service.ts`, `jwt.strategy.ts`, `models/user.schema.ts`, `libs/shared-types/src/index.ts` (`MAX_FAILED_LOGINS`) |
-| 6 | ניהול, ואישור או ביטול הזמנה בסעיף 6.2 | `products.controller.ts`, `products.service.ts`, `products/product-image.ts`, `products/optional-image.interceptor.ts`, `main.ts`, `orders.controller.ts`, `orders.service.ts`, `analytics.service.ts`, `auth/admin.guard.ts` |
+| 6 | ניהול, ואישור או ביטול הזמנה בסעיף 6.2 | `products.controller.ts`, `products.service.ts`, `products/product-image.ts`, `products/optional-image.interceptor.ts`, `main.ts`, `orders.controller.ts`, `orders.service.ts`, `analytics.controller.ts`, `analytics.service.ts`, `auth/admin.guard.ts` |
 | 7 | עגלה, יצירת הזמנה, ביטול | `carts/carts.service.ts`, `cache/cache.service.ts`, `orders/orders.service.ts` |
 | 8.1 | נקודות קצה | `apps/backend/README.md` והקונטרולרים. אם יש סתירה, הקונטרולר קובע ומתקנים את ה-README |
 | 9.1–9.2 | פיתוח ובדיקות | `README.md`, `libs/shared-types/src/index.spec.ts`, `apps/backend/src/common/http.spec.ts`, `apps/frontend/src/components/*.test.tsx`, `.github/workflows/ci.yml` |

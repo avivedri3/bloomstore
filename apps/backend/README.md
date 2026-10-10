@@ -107,7 +107,8 @@ State machine: `pending_payment → confirmed → processing → shipped → del
 
 | Method | Path | Auth | Description |
 | --- | --- | --- | --- |
-| GET | `/admin/stats` | Admin | Dashboard metrics |
+| GET | `/admin/stats` | Admin | Sales, traffic, and recent orders for the last 30 days |
+| POST | `/traffic` | — | Record a storefront page view (`path`, `visitorId`). Rate limited |
 
 ### Webhooks
 
@@ -124,7 +125,7 @@ State machine: `pending_payment → confirmed → processing → shipped → del
 
 ## Request bodies (Zod)
 
-Shared schemas live in `libs/shared-types` (`registerSchema`, `loginSchema`, `productInputSchema`, `cartItemInputSchema`, `addressInputSchema`, `checkoutSchema`, `orderStatusUpdateSchema`). See Swagger UI for examples.
+Shared schemas live in `libs/shared-types` (`registerSchema`, `loginSchema`, `productInputSchema`, `cartItemInputSchema`, `addressInputSchema`, `checkoutSchema`, `orderStatusUpdateSchema`, `pageViewSchema`). See Swagger UI for examples.
 
 ## Local setup
 

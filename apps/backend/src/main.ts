@@ -68,11 +68,12 @@ async function bootstrap(): Promise<void> {
   const hits = new Map<string, { count: number; reset: number }>();
   app.use((req: { ip?: string; path?: string }, res: { status: (n: number) => { json: (b: unknown) => void } }, next: () => void) => {
     const path = req.path ?? '';
-    if (
-      !path.includes('/auth/login') &&
-      !path.includes('/auth/register') &&
-      !path.includes('/stock-alerts')
-    ) {
+    const limit = path.includes('/traffic')
+      ? 120
+      : path.includes('/auth/login') || path.includes('/auth/register') || path.includes('/stock-alerts')
+        ? 20
+        : 0;
+    if (limit === 0) {
       next();
       return;
     }
@@ -85,7 +86,7 @@ async function bootstrap(): Promise<void> {
       return;
     }
     slot.count += 1;
-    if (slot.count > 20) {
+    if (slot.count > limit) {
       res.status(429).json({
         success: false,
         error: { code: 'RATE_LIMITED', message: 'Too many attempts, try again later' },

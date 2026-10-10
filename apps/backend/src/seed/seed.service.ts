@@ -410,6 +410,7 @@ export class SeedService implements OnModuleInit {
     await this.ensureDemoUsers();
     await this.ensureCatalog();
     await this.ensureStorefrontDemo();
+    await this.ensureDemoTraffic();
   }
 
   /** Idempotent upsert for local/demo accounts (passwords from env, not committed). */
@@ -899,5 +900,41 @@ export class SeedService implements OnModuleInit {
     date.setHours(11, 30, 0, 0);
     date.setDate(date.getDate() - days);
     return date;
+  }
+
+  /** Demo page views so the admin traffic chart is not empty on a fresh database. */
+  private async ensureDemoTraffic(): Promise<void> {
+    const existing = await this.auditLogs.countDocuments({ action: 'page.view' });
+    if (existing > 0) {
+      return;
+    }
+    const products = await this.products.find({ isActive: true }).limit(4).select('_id');
+    const paths = [
+      '/',
+      '/contact',
+      '/login',
+      '/register',
+      '/cart',
+      ...products.map((product) => `/products/${String(product._id)}`),
+    ];
+    const docs = [];
+    for (let day = 13; day >= 0; day -= 1) {
+      const views = 12 + (13 - day) * 2;
+      for (let index = 0; index < views; index += 1) {
+        const createdAt = this.daysAgo(day);
+        createdAt.setHours(9 + (index % 10), (index * 11) % 60, 0, 0);
+        const path = paths[(day * 3 + index) % paths.length];
+        docs.push({
+          action: 'page.view',
+          entity: 'page',
+          entityId: path,
+          metadata: { path, visitorId: `visitor-${String((day + index) % 16).padStart(2, '0')}` },
+          createdAt,
+          updatedAt: createdAt,
+        });
+      }
+    }
+    await this.auditLogs.collection.insertMany(docs);
+    this.log.log(`Seeded ${docs.length} demo page views`);
   }
 }

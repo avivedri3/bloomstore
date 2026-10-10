@@ -199,13 +199,64 @@ export interface OrderDto {
   updatedAt: string;
 }
 
+export const pageViewSchema = z.object({
+  path: z
+    .string()
+    .trim()
+    .min(1)
+    .max(180)
+    .regex(/^\/[A-Za-z0-9/_-]*$/, 'Enter a store path'),
+  visitorId: z
+    .string()
+    .trim()
+    .min(8)
+    .max(64)
+    .regex(/^[A-Za-z0-9-]+$/, 'Enter a visitor id'),
+});
+
+export type PageViewDto = z.infer<typeof pageViewSchema>;
+
+export interface AdminSalesDay {
+  date: string;
+  revenue: number;
+  count: number;
+}
+
+export interface AdminTrafficDay {
+  date: string;
+  views: number;
+  visitors: number;
+}
+
+export interface AdminRecentOrder {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  total: number;
+  createdAt: string;
+  itemCount: number;
+  summary: string;
+}
+
 export interface AdminStatsDto {
   totalRevenue: number;
+  averageOrder: number;
   openOrders: number;
   dailySalesCount: number;
   lowStockAlerts: number;
   userGrowth: number;
-  salesByDay: { date: string; revenue: number; count: number }[];
+  salesByDay: AdminSalesDay[];
+  ordersByStatus: { status: OrderStatus; count: number }[];
+  topProducts: { name: string; quantity: number; revenue: number }[];
+  revenueByCategory: { category: ProductCategory; revenue: number }[];
+  recentOrders: AdminRecentOrder[];
+  traffic: {
+    viewsToday: number;
+    views30d: number;
+    uniqueVisitors30d: number;
+    viewsByDay: AdminTrafficDay[];
+    topPages: { path: string; views: number }[];
+  };
 }
 
 export const ACCOUNT_LOCKED_CODE = 'ACCOUNT_LOCKED';

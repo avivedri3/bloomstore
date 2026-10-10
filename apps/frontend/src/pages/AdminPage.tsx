@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Button,
+  CircularProgress,
   Grid,
   MenuItem,
   Paper,
@@ -11,17 +12,7 @@ import {
   Tabs,
   TextField,
   Typography,
-  useTheme,
 } from '@mui/material';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import {
   ORDER_STATUSES,
   PRODUCT_CATEGORIES,
@@ -35,11 +26,11 @@ import {
   type OrderStatus,
   type ProductDto,
 } from '@bloomstore/shared-types';
+import { AdminStatsPanel } from '../components/AdminStatsPanel';
 import { PageHeader } from '../components/layout/PageHeader';
 import { PageShell } from '../components/layout/PageShell';
 import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { StatusChip } from '../components/StatusChip';
-import { Price } from '../components/Price';
 import { api, unwrap } from '../services/api';
 import { fieldErrorsFromZod } from '../utils/form';
 
@@ -68,12 +59,12 @@ function imageFieldError(file: File): string | null {
 }
 
 export function AdminPage() {
-  const theme = useTheme();
   const [tab, setTab] = useState(0);
   const [products, setProducts] = useState<ProductDto[]>([]);
   const [orders, setOrders] = useState<OrderDto[]>([]);
   const [status, setStatus] = useState<string>('');
   const [stats, setStats] = useState<AdminStatsDto | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyProductForm);
   const [editing, setEditing] = useState<ProductDto | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -88,12 +79,23 @@ export function AdminPage() {
   const loadProducts = () => unwrap<ProductDto[]>(api.get('/products/admin')).then(setProducts);
   const loadOrders = () =>
     unwrap<OrderDto[]>(api.get(`/orders/admin${status ? `?status=${status}` : ''}`)).then(setOrders);
-  const loadStats = () => unwrap<AdminStatsDto>(api.get('/admin/stats')).then(setStats);
+  const loadStats = () =>
+    unwrap<AdminStatsDto>(api.get('/admin/stats'))
+      .then((data) => {
+        setStats(data);
+        setStatsError(null);
+      })
+      .catch((err: Error) => setStatsError(err.message));
 
   useEffect(() => {
     void loadProducts();
-    void loadStats();
   }, []);
+
+  useEffect(() => {
+    if (tab === 2) {
+      void loadStats();
+    }
+  }, [tab]);
 
   useEffect(() => {
     void loadOrders();
@@ -441,41 +443,19 @@ export function AdminPage() {
         </Box>
       )}
 
-      {tab === 2 && stats && (
+      {tab === 2 && (
         <Box>
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            {[
-              ['Revenue', stats.totalRevenue, true],
-              ['Open orders', stats.openOrders, false],
-              ['Sales today', stats.dailySalesCount, false],
-              ['Low stock', stats.lowStockAlerts, false],
-              ['New users (7d)', stats.userGrowth, false],
-            ].map(([label, value, money]) => (
-              <Grid key={String(label)} size={{ xs: 12, sm: 6, lg: 4 }}>
-                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, height: '100%' }}>
-                  <Typography variant="overline" color="text.secondary">
-                    {label}
-                  </Typography>
-                  {money ? (
-                    <Price value={Number(value)} variant="h5" color="text.primary" />
-                  ) : (
-                    <Typography variant="h5">{value}</Typography>
-                  )}
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-          <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: 320 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.salesByDay}>
-                <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="revenue" fill={theme.palette.primary.main} radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
+          {statsError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {statsError}
+            </Alert>
+          )}
+          {!stats && !statsError && (
+            <Stack alignItems="center" sx={{ py: 6 }}>
+              <CircularProgress />
+            </Stack>
+          )}
+          {stats && <AdminStatsPanel stats={stats} />}
         </Box>
       )}
     </PageShell>

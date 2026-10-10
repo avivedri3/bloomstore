@@ -13,6 +13,7 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { AdminPage } from './pages/AdminPage';
 import { ContactPage } from './pages/ContactPage';
+import { TrackPageView } from './components/TrackPageView';
 import { useAuth } from './context/AuthContext';
 
 function Private({ children }: { children: ReactNode }) {
@@ -42,6 +43,7 @@ export default function App() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <ScrollToTop />
+      <TrackPageView />
       <Header />
       <Box component="main" sx={{ flex: 1 }}>
         <Routes>

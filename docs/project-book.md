@@ -180,7 +180,7 @@
 | `payments` | סכום שנרשם עם ההזמנה | `orderId`, `userId`, `amount`, `status` |
 | `addresses` | פנקס כתובות משלוח | `userId`, `fullName`, `phone`, `city`, `street`, `houseNumber`, `isDefault` |
 | `sequences` | מונה אטומי למספרי הזמנה | `name`, `value` (ה־seed מתחיל את המונה ב־1000; מספר ההזמנה הוא `BLM-n`) |
-| `auditlogs` | יומן ביקורת | `actorId`, `action`, `entity`, `entityId`, `metadata` |
+| `auditlogs` | יומן ביקורת וצפיות בדפים | `actorId`, `action`, `entity`, `entityId`, `metadata` |
 | `webhookevents` | אירוע חיצוני שכבר נקלט | `eventId` ייחודי, `type`, `payload`, `status` |
 | `failedwebhooks` | אירוע שנכשל בקליטה | `eventId`, `type`, `reason`, `payload` |
 | `idempotencykeys` | מניעת הזמנה כפולה | `key`, `userId`, `orderId`, תפוגה אחרי 24 שעות |
@@ -211,7 +211,7 @@
 | ההזמנות שלי | מעקב הלקוח | מספר הזמנה, מחיר נעול, סטטוס, ביטול לפני משלוח |
 | ניהול — מוצרים | קטלוג כולל לא-פעילים | הוספה עם קובץ תמונה, עריכת פרטים ותמונה, סימון אזל, החזרה למלאי, מחיקה רכה |
 | ניהול — הזמנות | מעקב מנהל | סינון לפי סטטוס וקידום לפי מכונת המצבים |
-| ניהול — סטטיסטיקות | תמונת מצב | הכנסות, הזמנות פתוחות, מלאי נמוך, צמיחת משתמשים ותרשים שבועי |
+| ניהול — סטטיסטיקות | תמונת מצב | הכנסות, תנועת גולשים, הזמנות לפי סטטוס, מוצרים מובילים והזמנות אחרונות |
 
 טבלה 4 — אחד-עשר מסכי המערכת והפונקציות שבכל אחד
 
@@ -254,7 +254,7 @@
 
 הספק `CartProvider` שולף את העגלה מ־`GET /api/cart` בכל פעם שיש משתמש מחובר. בלי משתמש העגלה המקומית מתרוקנת. הוספה, עדכון והסרה מעדכנים את ה־state לפי תשובת השרת.
 
-לקוח ה־Axios ב־`services/api.ts` מצמיד `Authorization: Bearer` לכל בקשה שיש לה טוקן, ופורש את המעטפת `{ success, data }`.
+לקוח ה־Axios ב־`services/api.ts` מצמיד `Authorization: Bearer` לכל בקשה שיש לה טוקן, ופורש את המעטפת `{ success, data }`. בכל מעבר בין מסכים `TrackPageView` שולח `POST /api/traffic` עם הנתיב ומזהה מבקר שנשמר ב־`localStorage`.
 
 <a id="ch4-3"></a>
 
@@ -381,10 +381,10 @@
 | --- | --- | --- |
 | Controller | `products/products.controller.ts` | רשימת מנהל, יצירה, עדכון, מחיקה רכה |
 | Controller | `orders/orders.controller.ts` | רשימת הזמנות, שינוי סטטוס, ביטול |
-| Controller | `analytics/analytics.controller.ts` | `GET /api/admin/stats` |
+| Controller | `analytics/analytics.controller.ts` | `GET /api/admin/stats`, `POST /api/traffic` |
 | Service | `products.service.ts` | קטלוג, Soft Delete, התראת מלאי |
 | Service | `orders.service.ts` | מכונת מצבים ו־restock |
-| Service | `analytics.service.ts` | שש שאילתות במקביל |
+| Service | `analytics.service.ts` | סיכום מכירות, תנועה והזמנות אחרונות |
 | Guard | `auth/admin.guard.ts` | דחיית משתמש שאינו מנהל |
 | Audit | `audit/audit.service.ts` | רישום פעולות יצירה, עדכון, מחיקה ושינוי סטטוס |
 
@@ -427,14 +427,15 @@
 - **Soft Delete.** `DELETE /api/products/:id` אינו מוחק את המסמך. הוא קובע `isActive: false`. הזמנות ישנות שומרות את שם המוצר ואת מחירו ב־snapshot, והמוצר נעלם מהקטלוג הציבורי.
 - **תמונת מוצר.** `POST /api/products` מקבל `multipart/form-data`. הקובץ (JPEG, PNG, WebP או GIF, עד 5MB) נשמר ב־`uploads/products`, ו־`imageUrl` מקבל את הכתובת הציבורית. הקבצים מוגשים מ־`/uploads/products/`, מחוץ לקידומת `/api`. `PATCH /api/products/:id` יכול להחליף את הקובץ. הקובץ הקודם נמחק רק אם אין הזמנה ששומרת אותו ב־snapshot.
 - **החזרה למלאי.** עדכון שמעלה `stock` מאפס ליחידה חיובית שולח התראת דוא״ל לכל כתובת ב־`stockNotifyEmails` ומרוקן את הרשימה. בלי `MAIL_WEBHOOK_URL` ההודעה נכתבת ללוג השרת.
-- **Audit Log.** יצירת מוצר, עדכון, מחיקה רכה ושינוי סטטוס נרשמים עם מזהה המנהל והמשאב.
+- **Audit Log.** יצירת מוצר, עדכון, מחיקה רכה ושינוי סטטוס נרשמים עם מזהה המנהל והמשאב. צפייה בדף נרשמת כ־`page.view` באותה קולקציה, עם הנתיב ומזהה המבקר ב־`metadata`.
+- **תנועה בחנות.** `POST /api/traffic` פתוח לכל גולש ומוגבל בקצב. לוח הסטטיסטיקות קורא את הרשומות האלה ל־30 הימים האחרונים.
 - **סינון הזמנות.** `GET /api/orders/admin?status=` מחזיר את כל ההזמנות או רק סטטוס אחד.
 
 <a id="ch6-5"></a>
 
 ### 6.5 החיבור לצד הלקוח
 
-מסך ה־`AdminPage` מחזיק שלושה טאבים ב־state מקומי: Products, Orders, Statistics. כל טאב קורא לנקודת הקצה המתאימה. אותו טופס מוסיף מוצר או עורך מוצר קיים: שדות הטקסט, כולל המחיר, נבדקים מול סכמת Zod, ותמונה חדשה נשלחת כקובץ. בעריכה אפשר להשאיר את התמונה הקיימת. תרשים העמודות של Recharts מצייר את `salesByDay`.
+מסך ה־`AdminPage` מחזיק שלושה טאבים ב־state מקומי: Products, Orders, Statistics. כל טאב קורא לנקודת הקצה המתאימה. אותו טופס מוסיף מוצר או עורך מוצר קיים: שדות הטקסט, כולל המחיר, נבדקים מול סכמת Zod, ותמונה חדשה נשלחת כקובץ. בעריכה אפשר להשאיר את התמונה הקיימת. טאב Statistics מצייר ב־Recharts תנועת גולשים, מכירות, הזמנות לפי סטטוס, מוצרים מובילים, הכנסה לפי קטגוריה והעמודים הנצפים, ומתחתיהם את ההזמנות האחרונות.
 
 ---
 
@@ -533,7 +534,8 @@
 | POST | `/api/orders/:id/cancel` | ביטול הזמנה |
 | GET | `/api/orders/admin` | כל ההזמנות |
 | PATCH | `/api/orders/:id/status` | שינוי סטטוס |
-| GET | `/api/admin/stats` | לוח בקרה |
+| GET | `/api/admin/stats` | לוח בקרה: מכירות, תנועה והזמנות אחרונות |
+| POST | `/api/traffic` | רישום צפייה בדף |
 | GET | `/api/health` | בדיקת חיות |
 | GET | `/api/docs` | ספר הפרויקט |
 | GET | `/api/docs/readme` | מדריך ה־API |

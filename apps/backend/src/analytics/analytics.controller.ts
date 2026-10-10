@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminGuard } from '../auth/admin.guard';
@@ -7,14 +7,22 @@ import { ok } from '../common/http';
 import { ApiAuth, ApiEnvelopeOk } from '../common/swagger';
 import { AnalyticsService } from './analytics.service';
 
-@ApiTags('admin')
-@ApiAuth()
-@Controller('admin/stats')
-@UseGuards(AuthGuard('jwt'), TokenVersionGuard, AdminGuard)
+@ApiTags('analytics')
+@Controller()
 export class AnalyticsController {
   constructor(private readonly analytics: AnalyticsService) {}
 
-  @Get()
+  @Post('traffic')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Record a storefront page view' })
+  @ApiEnvelopeOk()
+  async traffic(@Body() body: unknown) {
+    return ok(await this.analytics.recordPageView(body));
+  }
+
+  @Get('admin/stats')
+  @ApiAuth()
+  @UseGuards(AuthGuard('jwt'), TokenVersionGuard, AdminGuard)
   @ApiOperation({ summary: 'Admin dashboard statistics' })
   @ApiEnvelopeOk()
   async stats() {
