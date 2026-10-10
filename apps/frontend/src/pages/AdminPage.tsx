@@ -32,6 +32,7 @@ import { PageShell } from '../components/layout/PageShell';
 import { SurfaceCard } from '../components/layout/SurfaceCard';
 import { StatusChip } from '../components/StatusChip';
 import { api, unwrap } from '../services/api';
+import { completeAdminStats } from '../utils/admin-stats';
 import { fieldErrorsFromZod } from '../utils/form';
 
 const emptyProductForm = {
@@ -80,9 +81,13 @@ export function AdminPage() {
   const loadOrders = () =>
     unwrap<OrderDto[]>(api.get(`/orders/admin${status ? `?status=${status}` : ''}`)).then(setOrders);
   const loadStats = () =>
-    unwrap<AdminStatsDto>(api.get('/admin/stats'))
-      .then((data) => {
-        setStats(data);
+    Promise.all([
+      unwrap<Partial<AdminStatsDto>>(api.get('/admin/stats')),
+      unwrap<OrderDto[]>(api.get('/orders/admin')),
+      unwrap<ProductDto[]>(api.get('/products/admin')),
+    ])
+      .then(([data, orderRows, productRows]) => {
+        setStats(completeAdminStats(data, orderRows, productRows));
         setStatsError(null);
       })
       .catch((err: Error) => setStatsError(err.message));

@@ -71,27 +71,28 @@ export function AdminStatsPanel({ stats }: { stats: AdminStatsDto }) {
   const leaf = theme.palette.secondary.main;
   const grid = theme.palette.divider;
 
-  const traffic = stats.traffic.viewsByDay.map((day) => ({
+  const trafficDays = stats.traffic?.viewsByDay ?? [];
+  const traffic = trafficDays.map((day) => ({
     ...day,
     label: shortDate(day.date),
   }));
-  const sales = stats.salesByDay.map((day) => ({
+  const sales = (stats.salesByDay ?? []).map((day) => ({
     ...day,
     label: shortDate(day.date),
   }));
-  const statuses = stats.ordersByStatus.map((row) => ({
+  const statuses = (stats.ordersByStatus ?? []).map((row) => ({
     ...row,
     label: ORDER_STATUS_LABELS[row.status],
   }));
-  const products = stats.topProducts.map((row) => ({
+  const products = (stats.topProducts ?? []).map((row) => ({
     ...row,
     label: row.name.length > 22 ? `${row.name.slice(0, 20)}…` : row.name,
   }));
-  const categories = stats.revenueByCategory.map((row) => ({
+  const categories = (stats.revenueByCategory ?? []).map((row) => ({
     ...row,
     label: CATEGORY_LABELS[row.category as ProductCategory] ?? row.category,
   }));
-  const pages = stats.traffic.topPages.map((page) => ({
+  const pages = (stats.traffic?.topPages ?? []).map((page) => ({
     ...page,
     label: pageLabel(page.path),
   }));
@@ -101,9 +102,9 @@ export function AdminStatsPanel({ stats }: { stats: AdminStatsDto }) {
     { label: 'Average order', value: stats.averageOrder, money: true },
     { label: 'Open orders', value: stats.openOrders },
     { label: 'Sales today', value: stats.dailySalesCount },
-    { label: 'Views today', value: stats.traffic.viewsToday },
-    { label: 'Visitors (30d)', value: stats.traffic.uniqueVisitors30d },
-    { label: 'Page views (30d)', value: stats.traffic.views30d },
+    { label: 'Views today', value: stats.traffic?.viewsToday ?? 0 },
+    { label: 'Visitors (30d)', value: stats.traffic?.uniqueVisitors30d ?? 0 },
+    { label: 'Page views (30d)', value: stats.traffic?.views30d ?? 0 },
     { label: 'Low stock', value: stats.lowStockAlerts },
     { label: 'New users (7d)', value: stats.userGrowth },
   ];
@@ -222,10 +223,10 @@ export function AdminStatsPanel({ stats }: { stats: AdminStatsDto }) {
       <Typography variant="h6" sx={{ mb: 1.5 }}>
         Recent orders
       </Typography>
-      {stats.recentOrders.length === 0 ? (
+      {(stats.recentOrders ?? []).length === 0 ? (
         <Typography color="text.secondary">No orders yet.</Typography>
       ) : (
-        stats.recentOrders.map((order) => (
+        (stats.recentOrders ?? []).map((order) => (
           <SurfaceCard key={order.id}>
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
